@@ -144,7 +144,7 @@ impl TileTree {
         commands: &mut Commands,
         buffers: &mut Assets<ShaderStorageBuffer>, // Todo: solve this dependency with a component hook in the future
     ) -> Self {
-        let scale = config.shape.scale();
+        let scale = config.shape.scale_f32();
 
         let data = Array4::default((
             config.shape.face_count() as usize,

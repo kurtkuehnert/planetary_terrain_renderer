@@ -247,7 +247,7 @@ pub fn update_view_parameter(
     mut tile_trees: ResMut<TerrainViewComponents<TileTree>>,
 ) {
     for tile_tree in tile_trees.values_mut() {
-        let scale = tile_tree.shape.scale();
+        let scale = tile_tree.shape.scale_f32();
 
         if input.just_pressed(KeyCode::KeyN) {
             tile_tree.blend_distance -= 0.25 * scale;

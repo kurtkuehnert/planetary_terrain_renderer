@@ -2,7 +2,7 @@
 
 struct Terrain {
     lod_count: u32,
-    scale: f32,
+    scale: vec3<f32>,
     min_height: f32,
     max_height: f32,
     height_scale: f32,

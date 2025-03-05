@@ -28,7 +28,7 @@ fn sample_albedo(tile: AtlasTile) -> vec4<f32> {
 }
 
 fn color_earth(tile: AtlasTile) -> vec4<f32> {
-   let height = sample_height(tile) / terrain.height_scale;
+   let height = sample_height(tile);
 
     if (height < 0.0) {
         return textureSampleLevel(gradient, gradient_sampler, vec2<f32>(mix(0.0, 0.075, pow(height / terrain.min_height, 0.25)), 0.5), 0.0);
@@ -38,14 +38,12 @@ fn color_earth(tile: AtlasTile) -> vec4<f32> {
 }
 
 fn color_dataset(tile: AtlasTile) -> vec4<f32> {
-    let height = sample_height(tile) / terrain.height_scale;
+    let height = sample_height(tile);
 
     return textureSampleLevel(gradient, gradient_sampler, vec2<f32>(inverse_mix(terrain.min_height, terrain.max_height, height), 0.5), 0.0);
 }
 
 fn sample_color(tile: AtlasTile) -> vec4<f32> {
-    let height = sample_height(tile) / terrain.height_scale;
-
     var color: vec4<f32>;
     switch (gradient_info.mode) {
         case 0u: { color = color_dataset(tile); }
@@ -62,22 +60,6 @@ fn slope_gradient(world_normal: vec3<f32>, surface_gradient: vec3<f32>) -> vec4<
     return textureSampleLevel(gradient, gradient_sampler, vec2<f32>(5 * slope + 0.1, 0.5), 0.0);
 }
 
-//fn relief_shading(world_normal: vec3<f32>, surface_gradient: vec3<f32>) -> f32 {
-//    let normal  = normalize(world_normal - surface_gradient);
-//
-//    // Define the light direction as the base sphere normal
-//    let light_dir = world_normal;
-//
-//    // Compute diffuse lighting (Lambertian shading)
-//    let intensity = max(dot(normal, light_dir), 0.0);
-//
-//    return pow(intensity, 2.0);
-//
-////    return 1.0 - compute_slope(world_normal, surface_gradient);
-//}
-
-
-
 @fragment
 fn fragment(input: FragmentInput) -> FragmentOutput {
     var info = fragment_info(input);
@@ -91,6 +73,8 @@ fn fragment(input: FragmentInput) -> FragmentOutput {
 
 //    color = vec4(vec3(0.3), 1.0);
 //    color = slope_gradient(info.world_coordinate.normal, surface_gradient);
+
+//    if (distance(info.world_coordinate.position, bevy_terrain::bindings::view.world_position) > terrain.scale.y / 2.0 * 0.987) { color = vec4(1.0, 0.0, 0.0, 1.0); }
 
     var output: FragmentOutput;
 #ifdef LIGHTING

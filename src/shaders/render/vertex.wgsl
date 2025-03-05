@@ -53,14 +53,8 @@ fn vertex(input: VertexInput) -> VertexOutput {
     let tile   = lookup_tile(info.coordinate, info.blend);
     var height = sample_height(tile);
 
-//    if (distance(info.world_position, view.world_position) > 3000000.0) {
-//        height = 9000.0;
-//    }
-//    else {
-//        height = -12000.0;
-//    }
-
-//     height = height * 30.0;
+//    if (distance(info.world_coordinate.position, view.world_position) > bevy_terrain::bindings::terrain.scale.y / 2.0) { height = bevy_terrain::bindings::terrain.max_height; }
+//    else                                                                                                               { height = bevy_terrain::bindings::terrain.min_height; }
 
     return vertex_output(&info, height);
 }

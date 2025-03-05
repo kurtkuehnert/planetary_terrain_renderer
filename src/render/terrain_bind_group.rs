@@ -1,23 +1,23 @@
 use crate::{
     terrain::TerrainComponents,
-    terrain_data::{gpu_tile_atlas::GpuAtlasAttachment, GpuTileAtlas, TileAtlas},
+    terrain_data::{GpuTileAtlas, TileAtlas, gpu_tile_atlas::GpuAtlasAttachment},
     util::GpuBuffer,
 };
 use bevy::{
     ecs::{
         query::ROQueryItem,
-        system::{lifetimeless::SRes, SystemParamItem},
+        system::{SystemParamItem, lifetimeless::SRes},
     },
     math::Affine3,
     prelude::*,
     render::{
+        Extract,
         render_asset::RenderAssets,
         render_phase::{PhaseItem, RenderCommand, RenderCommandResult, TrackedRenderPass},
         render_resource::*,
         renderer::RenderDevice,
         storage::{GpuShaderStorageBuffer, ShaderStorageBuffer},
         texture::FallbackImage,
-        Extract,
     },
 };
 use std::array;
@@ -94,7 +94,7 @@ impl AttachmentUniform {
 #[derive(Default, ShaderType)]
 pub struct TerrainUniform {
     lod_count: u32,
-    scale: f32,
+    scale: Vec3,
     min_height: f32,
     max_height: f32,
     height_scale: f32,
@@ -112,9 +112,9 @@ impl TerrainUniform {
 
         Self {
             lod_count: tile_atlas.lod_count,
-            scale: tile_atlas.shape.scale() as f32,
-            min_height: tile_atlas.min_height,
-            max_height: tile_atlas.max_height,
+            scale: tile_atlas.shape.scale().as_vec3(),
+            min_height: tile_atlas.min_height * tile_atlas.height_scale,
+            max_height: tile_atlas.max_height * tile_atlas.height_scale,
             height_scale: tile_atlas.height_scale,
             world_from_local,
             local_from_world_transpose_a,

@@ -7,8 +7,8 @@ use bevy_terrain::{
     math::{Coordinate, SurfaceApproximation},
     prelude::*,
 };
-use itertools::{iproduct, Itertools};
-use rand::{prelude::ThreadRng, rng, Rng};
+use itertools::{Itertools, iproduct};
+use rand::{Rng, prelude::ThreadRng, rng};
 
 #[derive(Default)]
 struct ViewError {
@@ -31,7 +31,7 @@ fn compute_errors() -> Errors {
     let surface_samples = 10;
     let view_lod = 16;
     let threshold = 10000.0;
-    let min_tile_lod = (shape.scale() / threshold).log2().ceil() as u32;
+    let min_tile_lod = (shape.scale_f32() / threshold).log2().ceil() as u32;
     let max_tile_lod = 20;
 
     // The approximation is as good as the f32 computation (2m max error), at distances below 0.005 * RADIUS (30km) around the camera.
@@ -112,11 +112,27 @@ fn compute_errors() -> Errors {
     f32_avg = f32_avg / count as f64;
     cast_avg = cast_avg / count as f64;
 
-    println!("With a threshold factor of {} and an view LOD of {view_lod}, the error in a sample distance of {:.4} m around the camera looks like this.", threshold / shape.scale(), threshold);
-    println!("The world space error introduced by the first order taylor approximation is {:.4} m on average and {:.4} m at the maximum.", taylor1_avg, taylor1_max);
-    println!("The world space error introduced by the second order taylor approximation is {:.4} m on average and {:.4} m at the maximum.", taylor2_avg, taylor2_max);
-    println!("The world space error introduced by computing the position using f32 is {:.4} m on average and {:.4} m at the maximum.", f32_avg, f32_max);
-    println!("The world space error introduced by downcasting from f64 to f32 is {:.4} m on average and {:.4} m at the maximum.", cast_avg, cast_max);
+    println!(
+        "With a threshold factor of {} and an view LOD of {view_lod}, the error in a sample distance of {:.4} m around the camera looks like this.",
+        threshold / shape.scale_f32(),
+        threshold
+    );
+    println!(
+        "The world space error introduced by the first order taylor approximation is {:.4} m on average and {:.4} m at the maximum.",
+        taylor1_avg, taylor1_max
+    );
+    println!(
+        "The world space error introduced by the second order taylor approximation is {:.4} m on average and {:.4} m at the maximum.",
+        taylor2_avg, taylor2_max
+    );
+    println!(
+        "The world space error introduced by computing the position using f32 is {:.4} m on average and {:.4} m at the maximum.",
+        f32_avg, f32_max
+    );
+    println!(
+        "The world space error introduced by downcasting from f64 to f32 is {:.4} m on average and {:.4} m at the maximum.",
+        cast_avg, cast_max
+    );
 
     Errors {
         view_errors,
@@ -212,7 +228,7 @@ fn f32_position((tile, tile_uv): (TileCoordinate, Vec2), shape: TerrainShape) ->
     let xy = (2.0 * uv - 1.0) / (1.0 - 4.0 * SIGMA * (uv - 1.0) * uv).powf(0.5);
     let unit_position = FACE_MATRICES[tile.face as usize] * Vec3::new(1.0, xy.x, xy.y).normalize();
 
-    (shape.local_from_unit().as_mat3() * unit_position).as_dvec3()
+    (shape.scale().as_mat3() * unit_position).as_dvec3()
 }
 
 fn approximate_position(

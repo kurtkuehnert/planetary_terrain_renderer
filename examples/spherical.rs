@@ -26,16 +26,7 @@ impl Material for CustomMaterial {
 fn main() {
     App::new()
         .add_plugins((
-            DefaultPlugins
-                // .set(WindowPlugin {
-                //     primary_window: Some(Window {
-                //         mode: WindowMode::BorderlessFullscreen(MonitorSelection::Primary),
-                //         ..default()
-                //     }),
-                //     ..default()
-                // })
-                .build()
-                .disable::<TransformPlugin>(),
+            DefaultPlugins,
             TerrainPlugin,
             TerrainMaterialPlugin::<CustomMaterial>::default(),
             TerrainDebugPlugin, // enable debug settings and controls

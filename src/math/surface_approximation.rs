@@ -1,6 +1,6 @@
-use crate::math::{Coordinate, TerrainShape, FACE_MATRICES, SIGMA};
+use crate::math::{Coordinate, FACE_MATRICES, SIGMA, TerrainShape};
 use bevy::{
-    math::{DVec2, DVec3, Vec3},
+    math::{DMat3, DVec2, DVec3, Vec3},
     render::render_resource::ShaderType,
 };
 
@@ -90,7 +90,7 @@ impl SurfaceApproximation {
             let c_duv = 2.0 * y * l_du * l_dv - l * (y_dv * l_du + y * l_duv);
             let c_dvv = 2.0 * y * l_dv * l_dv - l * (2.0 * y_dv * l_dv + y * l_dvv) + y_dvv * l * l;
 
-            let m = shape.local_from_unit() * FACE_MATRICES[face];
+            let m = DMat3::from_diagonal(shape.scale()) * FACE_MATRICES[face];
             let p = m * DVec3::new(a, b, c) / l;
             let p_du = m * DVec3::new(a_du, b_du, c_du) / l.powi(2);
             let p_dv = m * DVec3::new(a_dv, b_dv, c_dv) / l.powi(2);
@@ -110,8 +110,8 @@ impl SurfaceApproximation {
             SurfaceApproximation {
                 p: (view_coordinate.local_position(shape, 0.0) - view_local_position).as_vec3()
                     + view_world_position,
-                p_du: Vec3::X * shape.scale() as f32 * 2.0,
-                p_dv: Vec3::Z * shape.scale() as f32 * 2.0,
+                p_du: Vec3::X * shape.scale_f32() as f32 * 2.0,
+                p_dv: Vec3::Z * shape.scale_f32() as f32 * 2.0,
                 p_duu: Vec3::ZERO,
                 p_duv: Vec3::ZERO,
                 p_dvv: Vec3::ZERO,

@@ -80,10 +80,6 @@ fn frustum_cull_sphere(coordinate: Coordinate) -> bool {
      return false;
 }
 
-// Todo: use the actual major and minor axis of the terrain
-const MAJOR_AXES: f32 = 6371000.0;
-const MINOR_AXES: f32 = 6371000.0;
-
 fn horizon_cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bool {
     // Todo: implement high precision supprot for culling
     if (coordinate.lod < 3) { return false; }
@@ -91,48 +87,29 @@ fn horizon_cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bo
     // to prevent issues with cut of corners, horizon culling is skipped for those cases
     // this still leads to adeqate culling when close to the surface
 
-    // min height should be set to the minimal height of the tile adjacent to the edge point
-    // we assume a continuous surface, thus the minimum of adjacent tile should be similar to this tile
-    // thus, we can set the min and max height on a per tile basis
-
-
-    let radius = MAJOR_AXES;
-    let aspect_ratio = (MAJOR_AXES / MINOR_AXES);
-
-    // transform from ellipsoidal to spherical coordinates
-    // this eliminates the oblatness of the ellipsoid
-    let ellipsoid_to_sphere = vec3<f32>(radius, radius / aspect_ratio, radius);
-
-    // radius of our culling sphere
-    // for correct conservative beviour, we have to adjust the minimal height according to the aspect ratio
-    let r = 1 + terrain.min_height * aspect_ratio / radius;
-
-    // view position
-    let v = terrain_view.world_position / ellipsoid_to_sphere;
-
-    // Todo: store world origin seperately
-    // terrain origin
-    let o = (affine3_to_square(terrain.world_from_unit) * vec4<f32>(0.0, 0.0, 0.0, 1.0)).xyz / ellipsoid_to_sphere;
 
     // position on the edge of the tile closest to the viewer with maximum height applied
     // serves as a conservative ocluder proxy
     // if this point is not visible, no other point of the tile should be visible
-    let t = apply_height(world_coordinate, terrain.max_height) / ellipsoid_to_sphere;
 
-    let vt = t - v;
-    let vo = o - v;
-    let r_r = r * r;
-    let vo_vo = dot(vo, vo);
-    let vo_vt = dot(vo, vt);
-    let vt_vt = dot(vt, vt);
+    // transform from world to unit coordinates centered on the world origin, this eliminates the oblatness of the ellipsoid
+    let ellipsoid_to_sphere = 1.0 / terrain.scale;
 
-    // test if t is in front of the horizon plane
-    if (vo_vt < vo_vo - r_r) { return false; }
+    // radius of the culling sphere, to be conservative we use the minimal height scaled by the minor axis
+    let radius = 1.0 + terrain.min_height / terrain.scale.y;
 
-    // test if t is inside the horizon cone
-    if (vo_vt * vo_vt / vt_vt > vo_vo - r_r) { return true; }
+    let view_position   = ellipsoid_to_sphere * terrain_view.world_position;
+    let tile_position   = ellipsoid_to_sphere * apply_height(world_coordinate, terrain.max_height);
+    let origin_position = ellipsoid_to_sphere * (affine3_to_square(terrain.world_from_unit) * vec4<f32>(0.0, 0.0, 0.0, 1.0)).xyz;
+    let view_tile       = tile_position - view_position;
+    let view_origin     = origin_position - view_position;
 
-    return false;
+    let vh_vh = dot(view_origin, view_origin) - radius * radius; // distance square from view to horizon
+    let vo_vt = dot(view_origin, view_tile);                     // distance square from view to tile projected onto the radius
+    let vt_vt = dot(view_tile, view_tile);                       // distance square from view to tile
+
+    // cull tile, if it is behind the horizon plane and it is inside the horizon cone
+    return (vo_vt > vh_vh) && (vo_vt * vo_vt / vt_vt > vh_vh);
 }
 
 fn no_data_cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bool {
@@ -144,9 +121,9 @@ fn no_data_cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bo
 }
 
 fn cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bool {
-    if (frustum_cull_aabb(coordinate)) { return true; }
+//    if (frustum_cull_aabb(coordinate)) { return true; }
 //    if (frustum_cull_sphere(coordinate)) { return true; }
-//    if (horizon_cull(coordinate, world_coordinate)) { return true; }
+    if (horizon_cull(coordinate, world_coordinate)) { return true; }
     if (no_data_cull(coordinate, world_coordinate)) { return true; }
 
     return false;

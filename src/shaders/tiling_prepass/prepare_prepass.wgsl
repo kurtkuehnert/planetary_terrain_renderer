@@ -1,6 +1,6 @@
 #import bevy_terrain::types::{TileCoordinate, Blend}
 #import bevy_terrain::bindings::{terrain_view, approximate_height, temporary_tiles, state, indirect_buffer}
-#import bevy_terrain::functions::{compute_view_coordinate, compute_world_coordinate, lookup_tile, apply_height}
+#import bevy_terrain::functions::{compute_view_coordinate, compute_world_coordinate, lookup_tile, apply_height, compute_blend}
 #import bevy_terrain::attachments::{sample_height, sample_height_mask}
 
 @compute @workgroup_size(1, 1, 1)
@@ -27,8 +27,9 @@ fn prepare_root() {
     // compute approximate height
     let coordinate       = compute_view_coordinate(terrain_view.face, terrain_view.lod);
     let world_coordinate = compute_world_coordinate(coordinate, approximate_height);
+    let blend            = compute_blend(world_coordinate.view_distance);
 
-    let tile = lookup_tile(coordinate, Blend(coordinate.lod, 0.0));
+    let tile = lookup_tile(coordinate, blend);
     if (!sample_height_mask(tile)) { approximate_height = sample_height(tile); }
 
     // Todo: this does not work
