@@ -1,6 +1,6 @@
 #define_import_path bevy_terrain::bindings
 
-#import bevy_terrain::types::{TerrainView, Terrain, TileTreeEntry, TileCoordinate, AttachmentConfig, TerrainModelApproximation, CullingData, IndirectBuffer, PrepassState}
+#import bevy_terrain::types::{TerrainView, Terrain, TileTreeEntry, TileCoordinate, AttachmentConfig, TerrainModelApproximation, IndirectBuffer, PrepassState}
 #import bevy_render::view::View;
 
 struct Attachments {
@@ -22,7 +22,6 @@ struct Attachments {
 @group(0) @binding(3) var<storage, read_write> final_tiles: array<TileCoordinate>;
 @group(0) @binding(4) var<storage, read_write> temporary_tiles: array<TileCoordinate>;
 @group(0) @binding(5) var<storage, read_write> state: PrepassState;
-@group(0) @binding(6) var<storage> culling_view: CullingData;
 @group(2) @binding(0) var<storage, read_write> indirect_buffer: IndirectBuffer;
 #endif
 

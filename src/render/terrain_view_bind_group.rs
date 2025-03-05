@@ -1,28 +1,23 @@
 use crate::{
     math::{TileCoordinate, ViewCoordinate},
     render::tiling_prepass::TerrainTilingPrepassPipelines,
-    terrain_data::TileTree,
+    terrain_data::{TileTree, tile_tree::TileTreeEntry},
     terrain_view::TerrainViewComponents,
 };
-
-use crate::terrain_data::tile_tree::TileTreeEntry;
 use bevy::{
     ecs::{
         query::ROQueryItem,
-        system::{lifetimeless::SRes, StaticSystemParam, SystemParamItem},
+        system::{StaticSystemParam, SystemParamItem, lifetimeless::SRes},
     },
     prelude::*,
     render::{
-        primitives::Frustum,
+        Extract,
         render_phase::{PhaseItem, RenderCommand, RenderCommandResult, TrackedRenderPass},
         render_resource::*,
         renderer::RenderDevice,
         storage::ShaderStorageBuffer,
         sync_world::MainEntity,
-        view::ExtractedView,
-        Extract,
     },
-    utils::HashMap,
 };
 
 #[derive(AsBindGroup)]
@@ -45,8 +40,6 @@ pub struct PrepassViewBindGroup {
     pub(crate) temporary_tiles: Buffer,
     #[storage(5, visibility(compute), buffer)]
     pub(crate) state: Buffer,
-    #[storage(6, visibility(compute), read_only, buffer)]
-    pub(crate) culling: Buffer,
 }
 
 #[derive(AsBindGroup)]
@@ -102,6 +95,7 @@ pub(crate) struct TerrainViewUniform {
     lod: u32,
     coordinates: [ViewCoordinate; 6],
     world_position: Vec3,
+    half_spaces: [Vec4; 6],
     #[cfg(feature = "high_precision")]
     surface_approximation: [crate::math::SurfaceApproximation; 6],
 }
@@ -127,27 +121,9 @@ impl From<&TileTree> for TerrainViewUniform {
                 .view_coordinates
                 .map(|view_coordinate| ViewCoordinate::new(view_coordinate, tile_tree.view_lod)),
             world_position: tile_tree.view_world_position,
+            half_spaces: tile_tree.half_spaces,
             #[cfg(feature = "high_precision")]
             surface_approximation: tile_tree.surface_approximation.clone(),
-        }
-    }
-}
-
-#[derive(Default, ShaderType)]
-pub struct CullingUniform {
-    half_spaces: [Vec4; 6],
-    world_position: Vec3,
-}
-
-impl From<&ExtractedView> for CullingUniform {
-    fn from(view: &ExtractedView) -> Self {
-        let clip_from_world = view.clip_from_view * view.world_from_view.compute_matrix().inverse();
-
-        Self {
-            half_spaces: Frustum::from_clip_from_world(&clip_from_world)
-                .half_spaces
-                .map(|space| space.normal_d()),
-            world_position: view.world_from_view.translation(),
         }
     }
 }
@@ -195,12 +171,6 @@ impl GpuTerrainView {
             usage: BufferUsages::STORAGE | BufferUsages::INDIRECT,
             mapped_at_creation: false,
         });
-        let culling = device.create_buffer(&BufferDescriptor {
-            label: None,
-            size: CullingUniform::min_size().get(),
-            usage: BufferUsages::STORAGE,
-            mapped_at_creation: false,
-        });
 
         let prepare_prepass = IndirectBindGroup {
             indirect: indirect.clone(),
@@ -212,7 +182,6 @@ impl GpuTerrainView {
             final_tiles: tiles.clone(),
             temporary_tiles,
             state,
-            culling,
         };
         let terrain_view = TerrainViewBindGroup {
             terrain_view: tile_tree.terrain_view_buffer.clone(),
@@ -286,30 +255,11 @@ impl GpuTerrainView {
 
     pub(crate) fn prepare_refine_tiles(
         device: Res<RenderDevice>,
-        extracted_views: Query<(MainEntity, &ExtractedView)>,
         prepass_pipeline: Res<TerrainTilingPrepassPipelines>,
         mut gpu_terrain_views: ResMut<TerrainViewComponents<GpuTerrainView>>,
         mut param: StaticSystemParam<<PrepassViewBindGroup as AsBindGroup>::Param>,
     ) {
-        // Todo: this is a hack
-        let extracted_views = extracted_views
-            .into_iter()
-            .collect::<HashMap<Entity, &ExtractedView>>();
-
-        for ((_, view), gpu_terrain_view) in gpu_terrain_views.iter_mut() {
-            let value = CullingUniform::from(*extracted_views.get(view).unwrap());
-            let mut buffer = vec![0; value.size().get() as usize];
-            encase::StorageBuffer::new(&mut buffer)
-                .write(&value)
-                .unwrap();
-
-            gpu_terrain_view.prepass_view.culling =
-                device.create_buffer_with_data(&BufferInitDescriptor {
-                    label: None,
-                    contents: &buffer,
-                    usage: BufferUsages::STORAGE,
-                });
-
+        for gpu_terrain_view in gpu_terrain_views.values_mut() {
             // Todo: be smarter about bind group recreation
             let bind_group = gpu_terrain_view.prepass_view.as_bind_group(
                 &prepass_pipeline.prepass_view_layout,

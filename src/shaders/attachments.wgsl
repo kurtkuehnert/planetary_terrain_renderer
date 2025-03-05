@@ -96,8 +96,8 @@ fn sample_surface_gradient(tile: AtlasTile, tangent_space: TangentSpace) -> vec3
     }
 #endif
 
-    let height_dx = dot(height_duv, tile.coordinate.uv_dx) * (1.0 - 0.0 * tile.blend_ratio);
-    let height_dy = dot(height_duv, tile.coordinate.uv_dy) * (1.0 - 0.0 * tile.blend_ratio);
+    let height_dx = dot(height_duv, tile.coordinate.uv_dx);
+    let height_dy = dot(height_duv, tile.coordinate.uv_dy);
 
 //    let height_dx = dpdx(height);
 //    let height_dy = dpdy(height);

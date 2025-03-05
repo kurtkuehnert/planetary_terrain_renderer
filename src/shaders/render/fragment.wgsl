@@ -100,7 +100,7 @@ fn fragment(input: FragmentInput) -> FragmentOutput {
     let color            = vec4<f32>(0.5);
     let surface_gradient = sample_surface_gradient(tile, info.tangent_space);
 
-    if mask { discard; }
+    if (mask) { discard; }
 
     var output: FragmentOutput;
     fragment_output(&info, &output, color, surface_gradient);

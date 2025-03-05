@@ -3,7 +3,7 @@ use crate::{
     math::{Coordinate, TerrainShape, TileCoordinate},
     render::terrain_view_bind_group::{TerrainViewUniform, TileTreeUniform},
     terrain::TerrainConfig,
-    terrain_data::{TileAtlas, INVALID_ATLAS_INDEX, INVALID_LOD},
+    terrain_data::{INVALID_ATLAS_INDEX, INVALID_LOD, TileAtlas},
     terrain_view::{TerrainViewComponents, TerrainViewConfig},
 };
 use bevy::{
@@ -12,11 +12,12 @@ use bevy::{
     prelude::*,
     render::{
         gpu_readback::{Readback, ReadbackComplete},
+        primitives::Frustum,
         render_resource::{BufferUsages, ShaderType},
         storage::ShaderStorageBuffer,
     },
 };
-use itertools::{iproduct, Itertools};
+use itertools::{Itertools, iproduct};
 use ndarray::Array4;
 use std::{cmp::Ordering, iter};
 
@@ -123,6 +124,7 @@ pub struct TileTree {
     pub(crate) view_local_position: DVec3,
     pub(crate) view_world_position: Vec3,
     pub(crate) view_coordinates: [Coordinate; 6],
+    pub(crate) half_spaces: [Vec4; 6],
     #[cfg(feature = "high_precision")]
     pub(crate) surface_approximation: [crate::math::SurfaceApproximation; 6],
     pub(crate) approximate_height: f32,
@@ -201,6 +203,7 @@ impl TileTree {
             released_tiles: default(),
             requested_tiles: default(),
             view_coordinates: default(),
+            half_spaces: default(),
             #[cfg(feature = "high_precision")]
             surface_approximation: default(),
             approximate_height: 0.0,
@@ -320,17 +323,30 @@ impl TileTree {
     /// Traverses all tile_trees and updates the tile states,
     /// while selecting newly requested and released tiles.
     pub(crate) fn compute_requests(
+        camera: Query<&Camera>,
         mut tile_trees: ResMut<TerrainViewComponents<TileTree>>,
         #[cfg(feature = "high_precision")] grids: crate::big_space::Grids,
         #[cfg(feature = "high_precision")] views: Query<(&Transform, &GridCell)>,
         #[cfg(not(feature = "high_precision"))] view_transforms: Query<&Transform>,
     ) {
         for (&(_, view), tile_tree) in tile_trees.iter_mut() {
+            let camera = camera.get(view).unwrap();
             let grid = grids.parent_grid(view).unwrap();
             let (transform, cell) = views.get(view).unwrap();
 
+            // Todo: transform should be global transform?
+
+            let clip_from_view = camera.clip_from_view();
+            let world_from_view = transform.compute_matrix();
+            let clip_from_world = clip_from_view * world_from_view.inverse();
+
+            let half_spaces = Frustum::from_clip_from_world(&clip_from_world)
+                .half_spaces
+                .map(|space| space.normal_d());
+
             tile_tree.view_local_position = grid.grid_position_double(cell, transform);
             tile_tree.view_world_position = transform.translation;
+            tile_tree.half_spaces = half_spaces;
             tile_tree.update();
         }
     }

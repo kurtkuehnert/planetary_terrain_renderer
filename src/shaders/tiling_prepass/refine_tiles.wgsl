@@ -1,5 +1,5 @@
 #import bevy_terrain::types::{TileCoordinate, Coordinate, WorldCoordinate, Blend}
-#import bevy_terrain::bindings::{terrain, culling_view, terrain_view, final_tiles, approximate_height, temporary_tiles, state}
+#import bevy_terrain::bindings::{terrain, terrain_view, final_tiles, approximate_height, temporary_tiles, state}
 #import bevy_terrain::functions::{compute_subdivision_coordinate, compute_world_coordinate, apply_height, compute_blend, lookup_tile}
 #import bevy_render::maths::affine3_to_square
 
@@ -28,35 +28,53 @@ fn subdivide(tile: TileCoordinate) {
     }
 }
 
-const min_height: f32 = 10.0 * -12000.0;
-const max_height: f32 = 10.0 * 9000.0;
+fn frustum_cull_aabb(coordinate: Coordinate) -> bool {
+    if (coordinate.lod == 0) { return false; }
 
-fn frustum_cull(coordinate: Coordinate) -> bool {
-    let center_coordinate = Coordinate(coordinate.face, coordinate.lod, coordinate.xy, vec2<f32>(0.5));
-    let center_position   = compute_world_coordinate(center_coordinate, approximate_height).position;
+    var aabb_min = vec3<f32>(3.40282e+38);
+    var aabb_max = vec3<f32>(-3.40282e+38);
 
-    // identify furthest corner from center
-    var radius = 0.0;
-
-    // we have to build a bounding sphere using the four courners to be conservative
-    // using the closest edge does not suffice
     for (var i = 0u; i < 4; i = i + 1) {
-        let corner_uv = vec2<f32>(f32(i & 1u), f32(i >> 1u & 1u));
-        let corner_coordinate = Coordinate(coordinate.face, coordinate.lod, coordinate.xy, corner_uv);
+        let corner_uv               = vec2<f32>(f32(i & 1u), f32(i >> 1u & 1u));
+        let corner_coordinate       = Coordinate(coordinate.face, coordinate.lod, coordinate.xy, corner_uv);
         let corner_world_coordinate = compute_world_coordinate(corner_coordinate, approximate_height);
-        let corner_min = apply_height(corner_world_coordinate, min_height);
-        let corner_max = apply_height(corner_world_coordinate, max_height);
+        let corner_low              = apply_height(corner_world_coordinate, terrain.min_height);
+        let corner_high             = apply_height(corner_world_coordinate, terrain.max_height);
 
-        // Consider both min and max height
-        radius = max(radius, max(distance(center_position, corner_min), distance(center_position, corner_max)));
+        aabb_min = min(aabb_min, min(corner_low, corner_high));
+        aabb_max = max(aabb_max, max(corner_low, corner_high));
     }
 
     for (var i = 0; i < 6; i = i + 1) {
-        let half_space = culling_view.half_spaces[i];
+        let half_space     = terrain_view.half_spaces[i];
+        let closest_corner = vec4<f32>(select(aabb_min, aabb_max, half_space.xyz > vec3<f32>(0.0)), 1.0);
 
-        if (dot(half_space, vec4<f32>(center_position, 1.0)) + radius < 0.0) {
-            return true;
-        }
+        if (dot(half_space, closest_corner) <= 0.0) { return true; } // The closest corner is outside
+    }
+
+    return false;
+}
+
+fn frustum_cull_sphere(coordinate: Coordinate) -> bool {
+    let center_coordinate = Coordinate(coordinate.face, coordinate.lod, coordinate.xy, vec2<f32>(0.5));
+    let center_position   = compute_world_coordinate(center_coordinate, approximate_height).position;
+
+    var radius = 0.0;
+
+    for (var i = 0u; i < 4; i = i + 1) {
+        let corner_uv               = vec2<f32>(f32(i & 1u), f32(i >> 1u & 1u));
+        let corner_coordinate       = Coordinate(coordinate.face, coordinate.lod, coordinate.xy, corner_uv);
+        let corner_world_coordinate = compute_world_coordinate(corner_coordinate, approximate_height);
+        let corner_low              = apply_height(corner_world_coordinate, terrain.min_height);
+        let corner_high             = apply_height(corner_world_coordinate, terrain.max_height);
+
+        radius = max(radius, max(distance(center_position, corner_low), distance(center_position, corner_high)));
+    }
+
+    for (var i = 0; i < 6; i = i + 1) {
+        let half_space = terrain_view.half_spaces[i];
+
+        if (dot(half_space, vec4<f32>(center_position, 1.0)) + radius < 0.0) { return true; }
     }
 
      return false;
@@ -87,10 +105,10 @@ fn horizon_cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bo
 
     // radius of our culling sphere
     // for correct conservative beviour, we have to adjust the minimal height according to the aspect ratio
-    let r = 1 + min_height * aspect_ratio / radius;
+    let r = 1 + terrain.min_height * aspect_ratio / radius;
 
     // view position
-    let v = culling_view.world_position / ellipsoid_to_sphere;
+    let v = terrain_view.world_position / ellipsoid_to_sphere;
 
     // Todo: store world origin seperately
     // terrain origin
@@ -99,7 +117,7 @@ fn horizon_cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bo
     // position on the edge of the tile closest to the viewer with maximum height applied
     // serves as a conservative ocluder proxy
     // if this point is not visible, no other point of the tile should be visible
-    let t = apply_height(world_coordinate, max_height) / ellipsoid_to_sphere;
+    let t = apply_height(world_coordinate, terrain.max_height) / ellipsoid_to_sphere;
 
     let vt = t - v;
     let vo = o - v;
@@ -126,8 +144,9 @@ fn no_data_cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bo
 }
 
 fn cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bool {
-    if (frustum_cull(coordinate)) { return true; }
-    if (horizon_cull(coordinate, world_coordinate)) { return true; }
+    if (frustum_cull_aabb(coordinate)) { return true; }
+//    if (frustum_cull_sphere(coordinate)) { return true; }
+//    if (horizon_cull(coordinate, world_coordinate)) { return true; }
     if (no_data_cull(coordinate, world_coordinate)) { return true; }
 
     return false;

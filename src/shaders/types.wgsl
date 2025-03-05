@@ -29,6 +29,7 @@ struct TerrainView {
     coordinates: array<ViewCoordinate, 6>,
     height_scale: f32,
     world_position: vec3<f32>,
+    half_spaces: array<vec4<f32>, 6>,
 #ifdef HIGH_PRECISION
     surface_approximation: array<SurfaceApproximation, 6>, // must be last field of this struct
 #endif
@@ -112,11 +113,6 @@ struct AttachmentConfig {
 
 struct IndirectBuffer {
     workgroup_count: vec3<u32>,
-}
-
-struct CullingData {
-    half_spaces: array<vec4<f32>, 6>,
-    world_position: vec3<f32>,
 }
 
 struct TangentSpace {

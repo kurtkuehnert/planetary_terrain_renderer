@@ -1,5 +1,5 @@
 #import bevy_terrain::types::{TileCoordinate, Blend}
-#import bevy_terrain::bindings::{terrain_view, approximate_height, temporary_tiles, state, indirect_buffer, culling_view}
+#import bevy_terrain::bindings::{terrain_view, approximate_height, temporary_tiles, state, indirect_buffer}
 #import bevy_terrain::functions::{compute_view_coordinate, compute_world_coordinate, lookup_tile, apply_height}
 #import bevy_terrain::attachments::{sample_height, sample_height_mask}
 
