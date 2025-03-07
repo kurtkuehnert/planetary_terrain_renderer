@@ -3,12 +3,14 @@ use clap::Parser;
 use std::env::set_var;
 
 fn main() {
-    if true {
-        set_var("RAYON_NUM_THREADS", "0");
-        set_var("GDAL_NUM_THREADS", "ALL_CPUS");
-    } else {
-        set_var("RAYON_NUM_THREADS", "1");
-        set_var("GDAL_NUM_THREADS", "1");
+    unsafe {
+        if true {
+            set_var("RAYON_NUM_THREADS", "0");
+            set_var("GDAL_NUM_THREADS", "ALL_CPUS");
+        } else {
+            set_var("RAYON_NUM_THREADS", "1");
+            set_var("GDAL_NUM_THREADS", "1");
+        }
     }
 
     let args = Cli::parse();

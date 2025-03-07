@@ -49,7 +49,7 @@ fn frustum_cull_aabb(coordinate: Coordinate) -> bool {
         let half_space     = terrain_view.half_spaces[i];
         let closest_corner = vec4<f32>(select(aabb_min, aabb_max, half_space.xyz > vec3<f32>(0.0)), 1.0);
 
-        if (dot(half_space, closest_corner) <= 0.0) { return true; } // The closest corner is outside
+        if (dot(half_space, closest_corner) < 0.0) { return true; } // The closest corner is outside
     }
 
     return false;
@@ -109,7 +109,7 @@ fn horizon_cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bo
     let vt_vt = dot(view_tile, view_tile);                       // distance square from view to tile
 
     // cull tile, if it is behind the horizon plane and it is inside the horizon cone
-    return (vo_vt > vh_vh) && (vo_vt * vo_vt / vt_vt > vh_vh);
+    return (vo_vt > vh_vh) && (vo_vt * vo_vt > vh_vh * vt_vt);
 }
 
 fn no_data_cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bool {
@@ -122,7 +122,7 @@ fn no_data_cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bo
 
 fn cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bool {
 //    if (frustum_cull_aabb(coordinate)) { return true; }
-//    if (frustum_cull_sphere(coordinate)) { return true; }
+    if (frustum_cull_sphere(coordinate)) { return true; }
     if (horizon_cull(coordinate, world_coordinate)) { return true; }
     if (no_data_cull(coordinate, world_coordinate)) { return true; }
 
