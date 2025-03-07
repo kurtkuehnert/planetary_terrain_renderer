@@ -56,6 +56,14 @@ pub struct TerrainViewBindGroup {
 }
 
 #[derive(ShaderType)]
+pub(crate) struct GeometryTile {
+    face: u32,
+    lod: u32,
+    xy: UVec2,
+    morph_ratios: Vec4,
+}
+
+#[derive(ShaderType)]
 pub(crate) struct Indirect {
     x_or_vertex_count: u32,
     y_or_instance_count: u32,
@@ -144,18 +152,16 @@ pub struct GpuTerrainView {
 impl GpuTerrainView {
     fn new(device: &RenderDevice, tile_tree: &TileTree) -> Self {
         // Todo: figure out a better way of limiting the tile buffer size
-        let tile_buffer_size =
-            TileCoordinate::min_size().get() * tile_tree.geometry_tile_count as u64;
 
         let tiles = device.create_buffer(&BufferDescriptor {
             label: None,
-            size: tile_buffer_size,
+            size: GeometryTile::min_size().get() * tile_tree.geometry_tile_count as u64,
             usage: BufferUsages::STORAGE,
             mapped_at_creation: false,
         });
         let temporary_tiles = device.create_buffer(&BufferDescriptor {
             label: None,
-            size: tile_buffer_size,
+            size: TileCoordinate::min_size().get() * tile_tree.geometry_tile_count as u64,
             usage: BufferUsages::STORAGE,
             mapped_at_creation: false,
         });

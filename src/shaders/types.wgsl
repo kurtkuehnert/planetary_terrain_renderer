@@ -41,6 +41,13 @@ struct TileCoordinate {
     xy: vec2<u32>,
 }
 
+struct GeometryTile {
+    face: u32,
+    lod: u32,
+    xy: vec2<u32>,
+    morph_ratios: vec4<f32>,
+}
+
 struct Coordinate {
     face: u32,
     lod: u32,

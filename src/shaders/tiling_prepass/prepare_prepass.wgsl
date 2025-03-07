@@ -8,21 +8,16 @@ fn prepare_root() {
     state.counter = -1;
     atomicStore(&state.child_index, i32(terrain_view.geometry_tile_count - 1u));
     atomicStore(&state.final_index, 0);
-
-#ifdef SPHERICAL
-    state.tile_count = 6u;
-
-    // Todo: consider culling the entire back face (opposite of viewer)
-    for (var i: u32 = 0u; i < 6u; i = i + 1u) {
-        temporary_tiles[i] = TileCoordinate(i, 0u, vec2<u32>(0u));
-    }
-#else
-    state.tile_count = 1u;
-
-    temporary_tiles[0] = TileCoordinate(0u, 0u, vec2<u32>(0u));
-#endif
-
     indirect_buffer.workgroup_count = vec3<u32>(1u, 1u, 1u);
+    
+#ifdef SPHERICAL
+    // Todo: consider culling the entire back face (opposite of viewer)
+    for (var i: u32 = 0u; i < 6u; i = i + 1u) { temporary_tiles[i] = TileCoordinate(i, 0u, vec2<u32>(0u)); }
+    state.tile_count = 6u;
+#else
+    temporary_tiles[0] = TileCoordinate(0u, 0u, vec2<u32>(0u));
+    state.tile_count = 1u;
+#endif
 
     // compute approximate height
     let coordinate       = compute_view_coordinate(terrain_view.face, terrain_view.lod);

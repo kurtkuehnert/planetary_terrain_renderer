@@ -1,9 +1,9 @@
 use crate::{
     debug::DebugTerrain,
     render::{
+        GpuTerrain, GpuTerrainView,
         terrain_bind_group::TerrainBindGroup,
         terrain_view_bind_group::{IndirectBindGroup, PrepassViewBindGroup, TerrainViewBindGroup},
-        GpuTerrain, GpuTerrainView,
     },
     shaders::{PREPARE_PREPASS_SHADER, REFINE_TILES_SHADER},
     terrain::TerrainComponents,
@@ -24,15 +24,17 @@ bitflags::bitflags! {
     #[repr(transparent)]
     pub struct TilingPrepassPipelineKey: u32 {
         const NONE           = 0;
-        const REFINE_TILES   = 1 << 0;
-        const PREPARE_ROOT   = 1 << 1;
-        const PREPARE_NEXT   = 1 << 2;
-        const PREPARE_RENDER = 1 << 3;
-        const SPHERICAL      = 1 << 4;
-        const HIGH_PRECISION = 1 << 5;
-        const TEST1          = 1 << 6;
-        const TEST2          = 1 << 7;
-        const TEST3          = 1 << 8;
+        const REFINE_TILES   = 1 <<  0;
+        const PREPARE_ROOT   = 1 <<  1;
+        const PREPARE_NEXT   = 1 <<  2;
+        const PREPARE_RENDER = 1 <<  3;
+        const SPHERICAL      = 1 <<  4;
+        const HIGH_PRECISION = 1 <<  5;
+        const MORPH          = 1 <<  6;
+        const BLEND          = 1 <<  7;
+        const TEST1          = 1 <<  8;
+        const TEST2          = 1 <<  9;
+        const TEST3          = 1 << 10;
     }
 }
 
@@ -43,6 +45,12 @@ impl TilingPrepassPipelineKey {
         #[cfg(feature = "high_precision")]
         if debug.high_precision {
             key |= TilingPrepassPipelineKey::HIGH_PRECISION;
+        }
+        if debug.morph {
+            key |= TilingPrepassPipelineKey::MORPH;
+        }
+        if debug.blend {
+            key |= TilingPrepassPipelineKey::BLEND;
         }
         if debug.test1 {
             key |= TilingPrepassPipelineKey::TEST1;
@@ -68,6 +76,12 @@ impl TilingPrepassPipelineKey {
         #[cfg(feature = "high_precision")]
         if self.contains(TilingPrepassPipelineKey::HIGH_PRECISION) {
             shader_defs.push("HIGH_PRECISION".into());
+        }
+        if self.contains(TilingPrepassPipelineKey::MORPH) {
+            shader_defs.push("MORPH".into());
+        }
+        if self.contains(TilingPrepassPipelineKey::BLEND) {
+            shader_defs.push("BLEND".into());
         }
         if self.contains(TilingPrepassPipelineKey::TEST1) {
             shader_defs.push("TEST1".into());

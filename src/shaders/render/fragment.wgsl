@@ -1,8 +1,8 @@
 #define_import_path bevy_terrain::fragment
 
-#import bevy_terrain::types::{Coordinate, WorldCoordinate, Blend, AtlasTile, TangentSpace}
+#import bevy_terrain::types::{Blend, Coordinate, WorldCoordinate, AtlasTile, TangentSpace}
 #import bevy_terrain::bindings::{terrain, terrain_view, geometry_tiles, approximate_height}
-#import bevy_terrain::functions::{compute_coordinate, compute_blend, lookup_tile, compute_tangent_space, apply_height, compute_world_coordinate, high_precision}
+#import bevy_terrain::functions::{compute_coordinate, compute_world_coordinate, compute_blend, compute_tangent_space, lookup_tile, apply_height, high_precision}
 #import bevy_terrain::attachments::{sample_height_mask, sample_surface_gradient}
 #import bevy_terrain::debug::{show_data_lod, show_geometry_lod, show_tile_tree, show_pixels}
 #import bevy_pbr::mesh_view_bindings::view
@@ -27,8 +27,6 @@ struct FragmentInfo {
     world_coordinate: WorldCoordinate,
     tangent_space: TangentSpace,
     blend: Blend,
-    color: vec4<f32>,
-    normal: vec3<f32>,
 }
 
 fn fragment_info(input: FragmentInput) -> FragmentInfo{
@@ -84,7 +82,7 @@ fn fragment_debug(info: ptr<function, FragmentInfo>, output: ptr<function, Fragm
     (*output).color = vec4<f32>(normal, 1.0);
     // (*output).color = vec4<f32>(surface_gradient, 1.0);
 #endif
-#ifdef TEST1
+#ifdef TEST3
     if (high_precision((*info).world_coordinate.view_distance)) {
         (*output).color = mix((*output).color, vec4<f32>(0.3), 0.5);
     }

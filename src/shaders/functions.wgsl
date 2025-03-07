@@ -16,16 +16,20 @@ fn high_precision(view_distance: f32) -> bool {
 
 #ifdef VERTEX
 fn compute_coordinate(vertex_index: u32) -> Coordinate {
-    let tile_index = vertex_index / terrain_view.vertices_per_tile;
-
     // use first and last indices of the rows twice, to form degenerate triangles
+    let tile_index   = vertex_index / terrain_view.vertices_per_tile;
     let column_index = (vertex_index % terrain_view.vertices_per_tile) / terrain_view.vertices_per_row;
     let row_index    = clamp(vertex_index % terrain_view.vertices_per_row, 1u, terrain_view.vertices_per_row - 2u) - 1u;
+    let grid_index   = vec2<u32>(column_index + (row_index & 1u), row_index >> 1u);
 
     let tile    = geometry_tiles[tile_index];
-    let tile_uv = vec2<f32>(f32(column_index + (row_index & 1u)), f32(row_index >> 1u)) / terrain_view.grid_size;
+    let tile_uv = vec2<f32>(grid_index) / terrain_view.grid_size;
+    let even_uv = vec2<f32>(grid_index & vec2<u32>(~1u)) / terrain_view.grid_size;
 
-    return Coordinate(tile.face, tile.lod, tile.xy, tile_uv);
+    let morph_ratio = mix(mix(tile.morph_ratios.x, tile.morph_ratios.y, tile_uv.x),
+                          mix(tile.morph_ratios.z, tile.morph_ratios.w, tile_uv.x), tile_uv.y);
+
+    return Coordinate(tile.face, tile.lod, tile.xy, mix(tile_uv, even_uv, morph_ratio));
 }
 #endif
 
@@ -45,14 +49,6 @@ fn compute_world_coordinate(coordinate: Coordinate, height: f32) -> WorldCoordin
     }
 
     return world_coordinate;
-}
-
-fn correct_world_coordinate(coordinate: Coordinate, view_distance: f32) -> WorldCoordinate {
-    if (high_precision(view_distance)) {
-        return compute_world_coordinate_precise(coordinate, approximate_height);
-    } else {
-        return compute_world_coordinate_imprecise(coordinate, approximate_height);
-    }
 }
 
 fn compute_world_coordinate_imprecise(coordinate: Coordinate, height: f32) -> WorldCoordinate {
@@ -132,20 +128,13 @@ fn inverse_mix(a: f32, b: f32, value: f32) -> f32 {
     return saturate((value - a) / (b - a));
 }
 
-fn morph_coordinate(coordinate: Coordinate, view_distance: f32) -> Coordinate {
+fn compute_morph(lod: u32, view_distance: f32) -> f32 {
 #ifdef MORPH
-    // Morphing more than one layer at once is not possible, since the approximate view distance for vertices that
-    // should be placed on the same position will be slightly different, so the target lod and thus the ratio will be
-    // slightly off as well, which results in a pop.
-    let even_uv = vec2<f32>(vec2<u32>(coordinate.uv * terrain_view.grid_size) & vec2<u32>(~1u)) / terrain_view.grid_size;
-
     let target_lod = log2(terrain_view.morph_distance / view_distance);
-    let lod        = coordinate.lod;
-    let ratio      = select(saturate(1.0 - (target_lod - f32(lod)) / terrain_view.morph_range), 0.0, lod == 0);
 
-    return Coordinate(coordinate.face, coordinate.lod, coordinate.xy, mix(coordinate.uv, even_uv, ratio));
+    return select(saturate(1.0 - (target_lod - f32(lod)) / terrain_view.morph_range), 0.0, lod == 0);
 #else
-    return coordinate;
+    return 0.0;
 #endif
 }
 

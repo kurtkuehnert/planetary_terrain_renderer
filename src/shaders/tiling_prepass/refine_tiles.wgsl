@@ -1,6 +1,6 @@
-#import bevy_terrain::types::{TileCoordinate, Coordinate, WorldCoordinate, Blend}
+#import bevy_terrain::types::{TileCoordinate, GeometryTile, Coordinate, WorldCoordinate, Blend}
 #import bevy_terrain::bindings::{terrain, terrain_view, final_tiles, approximate_height, temporary_tiles, state}
-#import bevy_terrain::functions::{compute_subdivision_coordinate, compute_world_coordinate, apply_height, compute_blend, lookup_tile}
+#import bevy_terrain::functions::{compute_subdivision_coordinate, compute_world_coordinate, compute_morph, compute_blend, lookup_tile, apply_height}
 #import bevy_render::maths::affine3_to_square
 
 fn child_index() -> i32 {
@@ -129,6 +129,26 @@ fn cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bool {
     return false;
 }
 
+fn prepare_tile(tile: TileCoordinate) -> GeometryTile {
+    var morph_ratios: array<f32, 4>;
+
+    for (var i = 0u; i < 4; i = i + 1) {
+        let corner_uv               = vec2<f32>(f32(i & 1u), f32(i >> 1u & 1u));
+        let corner_coordinate       = Coordinate(tile.face, tile.lod, tile.xy, corner_uv);
+        let corner_world_coordinate = compute_world_coordinate(corner_coordinate, approximate_height);
+
+        let view_distance = corner_world_coordinate.view_distance;
+        let target_lod  = log2(terrain_view.morph_distance / view_distance);
+        let lod         = corner_coordinate.lod;
+        morph_ratios[i] = select(saturate(1.0 - (target_lod - f32(lod)) / terrain_view.morph_range), 0.0, lod == 0);
+        morph_ratios[i] = compute_morph(corner_coordinate.lod, corner_world_coordinate.view_distance);
+    }
+
+    let t = vec4<f32>(morph_ratios[0], morph_ratios[1], morph_ratios[2], morph_ratios[3]);
+
+    return GeometryTile(tile.face, tile.lod, tile.xy, t);
+}
+
 @compute @workgroup_size(64, 1, 1)
 fn refine_tiles(@builtin(global_invocation_id) invocation_id: vec3<u32>) {
     if (invocation_id.x >= state.tile_count) { return; }
@@ -142,6 +162,6 @@ fn refine_tiles(@builtin(global_invocation_id) invocation_id: vec3<u32>) {
     if (should_be_divided(coordinate, world_coordinate)) {
         subdivide(tile);
     } else {
-        final_tiles[final_index()] = tile;
+        final_tiles[final_index()] = prepare_tile(tile);
     }
 }

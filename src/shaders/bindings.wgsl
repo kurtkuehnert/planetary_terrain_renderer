@@ -1,6 +1,6 @@
 #define_import_path bevy_terrain::bindings
 
-#import bevy_terrain::types::{TerrainView, Terrain, TileTreeEntry, TileCoordinate, AttachmentConfig, TerrainModelApproximation, IndirectBuffer, PrepassState}
+#import bevy_terrain::types::{TerrainView, Terrain, TileTreeEntry, TileCoordinate, GeometryTile, AttachmentConfig, TerrainModelApproximation, IndirectBuffer, PrepassState}
 #import bevy_render::view::View;
 
 struct Attachments {
@@ -19,7 +19,7 @@ struct Attachments {
 @group(0) @binding(0) var<storage> terrain_view: TerrainView;
 @group(0) @binding(1) var<storage, read_write> approximate_height: f32;
 @group(0) @binding(2) var<storage> tile_tree: array<TileTreeEntry>;
-@group(0) @binding(3) var<storage, read_write> final_tiles: array<TileCoordinate>;
+@group(0) @binding(3) var<storage, read_write> final_tiles: array<GeometryTile>;
 @group(0) @binding(4) var<storage, read_write> temporary_tiles: array<TileCoordinate>;
 @group(0) @binding(5) var<storage, read_write> state: PrepassState;
 @group(2) @binding(0) var<storage, read_write> indirect_buffer: IndirectBuffer;
@@ -31,8 +31,8 @@ struct Attachments {
 @group(2) @binding(0) var<storage> terrain_view: TerrainView;
 @group(2) @binding(1) var<storage> approximate_height: f32;
 @group(2) @binding(2) var<storage> tile_tree: array<TileTreeEntry>;
-@group(2) @binding(3) var<storage> geometry_tiles: array<TileCoordinate>;
-#endif PREPASS
+@group(2) @binding(3) var<storage> geometry_tiles: array<GeometryTile>;
+#endif
 
 // terrain bindings
 @group(1) @binding(0)  var<storage> terrain: Terrain;

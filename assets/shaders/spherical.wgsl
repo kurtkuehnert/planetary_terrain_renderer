@@ -83,9 +83,9 @@ fn fragment(input: FragmentInput) -> FragmentOutput {
     output.color = color;
 #endif
 
-#ifdef TEST3
-    fragment_output(&info, &output, color, surface_gradient);
-#endif
+//#ifdef TEST1
+//    fragment_output(&info, &output, color, surface_gradient);
+//#endif
 
     fragment_debug(&info, &output, tile, surface_gradient);
     return output;
