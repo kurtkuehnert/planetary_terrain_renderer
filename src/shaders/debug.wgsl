@@ -54,10 +54,13 @@ fn show_data_lod(blend: Blend, tile: AtlasTile) -> vec4<f32> {
     return color;
 }
 
-fn show_geometry_lod(coordinate: Coordinate) -> vec4<f32> {
-    let world_coordinate = compute_world_coordinate(coordinate, approximate_height);
+fn show_geometry_lod(coordinate: Coordinate, tile_index: u32) -> vec4<f32> {
+    let tile_uv       = coordinate.uv;
+    let tile          = geometry_tiles[tile_index];
+    let view_distance = mix(mix(tile.view_distances.x, tile.view_distances.y, tile_uv.x),
+                            mix(tile.view_distances.z, tile.view_distances.w, tile_uv.x), tile_uv.y);
 
-    let target_lod = log2(terrain_view.morph_distance / world_coordinate.view_distance);
+    let target_lod = log2(terrain_view.morph_distance / view_distance);
     let lod        = u32(coordinate.lod);
 
 #ifdef MORPH
@@ -68,9 +71,9 @@ fn show_geometry_lod(coordinate: Coordinate) -> vec4<f32> {
 
     var color = checker_color(coordinate, ratio);
 
-    let tile = TileCoordinate(coordinate.face, coordinate.lod, coordinate.xy);
+    let tile_coordinate = TileCoordinate(tile.face, tile.lod, tile.xy);
 
-    if (distance(coordinate.uv, compute_subdivision_coordinate(tile).uv) < 0.1) {
+    if (distance(coordinate.uv, compute_subdivision_coordinate(tile_coordinate).uv) < 0.1) {
         color = mix(index_color(coordinate.lod + 1), vec4(0.0), 0.7);
     }
 

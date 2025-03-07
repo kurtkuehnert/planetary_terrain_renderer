@@ -41,6 +41,8 @@ fn compute_coordinate(tile_index: u32, tile_uv: vec2<f32>) -> Coordinate {
 }
 #endif
 
+
+#ifdef PREPASS
 fn compute_world_coordinate(coordinate: Coordinate, height: f32) -> WorldCoordinate {
     var world_coordinate = compute_world_coordinate_imprecise(coordinate, height);
 
@@ -50,6 +52,25 @@ fn compute_world_coordinate(coordinate: Coordinate, height: f32) -> WorldCoordin
 
     return world_coordinate;
 }
+#endif
+
+#ifdef VERTEX
+fn compute_world_coordinate(coordinate: Coordinate, height: f32, tile_index: u32, tile_uv: vec2<f32>) -> WorldCoordinate {
+    let tile          = geometry_tiles[tile_index];
+    let view_distance = mix(mix(tile.view_distances.x, tile.view_distances.y, tile_uv.x),
+                            mix(tile.view_distances.z, tile.view_distances.w, tile_uv.x), tile_uv.y);
+
+    if (high_precision(view_distance)) { return compute_world_coordinate_precise(coordinate, height); }
+    else {                               return compute_world_coordinate_imprecise(coordinate, height); }
+}
+#endif
+
+#ifdef FRAGMENT
+fn compute_world_coordinate(coordinate: Coordinate, height: f32, view_distance: f32) -> WorldCoordinate {
+    if (high_precision(view_distance)) { return compute_world_coordinate_precise(coordinate, height); }
+    else {                               return compute_world_coordinate_imprecise(coordinate, height); }
+}
+#endif
 
 fn compute_world_coordinate_imprecise(coordinate: Coordinate, height: f32) -> WorldCoordinate {
     let uv = (vec2<f32>(coordinate.xy) + coordinate.uv) / exp2(f32(coordinate.lod));

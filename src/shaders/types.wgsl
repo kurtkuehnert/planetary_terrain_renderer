@@ -45,6 +45,7 @@ struct GeometryTile {
     face: u32,
     lod: u32,
     xy: vec2<u32>,
+    view_distances: vec4<f32>,
     morph_ratios: vec4<f32>,
 }
 

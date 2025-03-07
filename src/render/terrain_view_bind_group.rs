@@ -60,6 +60,7 @@ pub(crate) struct GeometryTile {
     face: u32,
     lod: u32,
     xy: UVec2,
+    view_distances: Vec4,
     morph_ratios: Vec4,
 }
 

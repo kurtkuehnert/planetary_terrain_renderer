@@ -130,23 +130,22 @@ fn cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bool {
 }
 
 fn prepare_tile(tile: TileCoordinate) -> GeometryTile {
-    var morph_ratios: array<f32, 4>;
+    var distances: array<f32, 4>;
+    var ratios: array<f32, 4>;
 
     for (var i = 0u; i < 4; i = i + 1) {
         let corner_uv               = vec2<f32>(f32(i & 1u), f32(i >> 1u & 1u));
         let corner_coordinate       = Coordinate(tile.face, tile.lod, tile.xy, corner_uv);
         let corner_world_coordinate = compute_world_coordinate(corner_coordinate, approximate_height);
 
-        let view_distance = corner_world_coordinate.view_distance;
-        let target_lod  = log2(terrain_view.morph_distance / view_distance);
-        let lod         = corner_coordinate.lod;
-        morph_ratios[i] = select(saturate(1.0 - (target_lod - f32(lod)) / terrain_view.morph_range), 0.0, lod == 0);
-        morph_ratios[i] = compute_morph(corner_coordinate.lod, corner_world_coordinate.view_distance);
+        distances[i] = corner_world_coordinate.view_distance;
+        ratios[i]    = compute_morph(corner_coordinate.lod, corner_world_coordinate.view_distance);
     }
 
-    let t = vec4<f32>(morph_ratios[0], morph_ratios[1], morph_ratios[2], morph_ratios[3]);
+    let view_distances = vec4<f32>(distances[0], distances[1], distances[2], distances[3]);
+    let morph_ratios   = vec4<f32>(ratios[0], ratios[1], ratios[2], ratios[3]);
 
-    return GeometryTile(tile.face, tile.lod, tile.xy, t);
+    return GeometryTile(tile.face, tile.lod, tile.xy, view_distances, morph_ratios);
 }
 
 @compute @workgroup_size(64, 1, 1)

@@ -11,9 +11,10 @@
 
 struct FragmentInput {
     @builtin(position) clip_position: vec4<f32>,
-    @location(0) tile_index: u32,
-    @location(1) tile_uv: vec2<f32>,
-    @location(2) height: f32,
+    @location(0) tile_uv: vec2<f32>,
+    @location(1) tile_index: u32,
+    @location(2) view_distance: f32,
+    @location(3) height: f32,
 }
 
 struct FragmentOutput {
@@ -22,6 +23,7 @@ struct FragmentOutput {
 
 struct FragmentInfo {
     clip_position: vec4<f32>,
+    tile_index: u32,
     height: f32,
     coordinate: Coordinate,
     world_coordinate: WorldCoordinate,
@@ -32,9 +34,10 @@ struct FragmentInfo {
 fn fragment_info(input: FragmentInput) -> FragmentInfo{
     var info: FragmentInfo;
     info.clip_position    = input.clip_position;
+    info.tile_index       = input.tile_index;
     info.height           = input.height;
     info.coordinate       = compute_coordinate(input.tile_index, input.tile_uv);
-    info.world_coordinate = compute_world_coordinate(info.coordinate, input.height);
+    info.world_coordinate = compute_world_coordinate(info.coordinate, input.height, input.view_distance);
     info.tangent_space    = compute_tangent_space(info.world_coordinate);
     info.blend            = compute_blend(info.world_coordinate.view_distance);
     return info;
@@ -67,7 +70,7 @@ fn fragment_debug(info: ptr<function, FragmentInfo>, output: ptr<function, Fragm
     (*output).color = show_data_lod((*info).blend, tile);
 #endif
 #ifdef SHOW_GEOMETRY_LOD
-    (*output).color = show_geometry_lod((*info).coordinate);
+    (*output).color = show_geometry_lod((*info).coordinate, (*info).tile_index);
 #endif
 #ifdef SHOW_TILE_TREE
     (*output).color = show_tile_tree((*info).coordinate, (*info).world_coordinate);
