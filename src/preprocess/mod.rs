@@ -1,18 +1,18 @@
 // use crate::{
 //     formats::TiffLoader,
 //     preprocess::{gpu_preprocessor::GpuPreprocessor, preprocessor::PreprocessTaskType},
-//     shaders::{load_preprocess_shaders, DOWNSAMPLE_SHADER, SPLIT_SHADER, STITCH_SHADER},
+//     shaders::{DOWNSAMPLE_SHADER, SPLIT_SHADER, STITCH_SHADER, load_preprocess_shaders},
 //     terrain::TerrainComponents,
 //     terrain_data::GpuTileAtlas,
 // };
 // use bevy::{
 //     prelude::*,
 //     render::{
+//         Render, RenderApp, RenderSet,
 //         graph::CameraDriverLabel,
 //         render_graph::{self, RenderGraph, RenderLabel},
 //         render_resource::*,
 //         renderer::{RenderContext, RenderDevice},
-//         Render, RenderApp, RenderSet,
 //     },
 // };
 //

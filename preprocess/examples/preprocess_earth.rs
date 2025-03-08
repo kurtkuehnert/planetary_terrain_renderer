@@ -17,7 +17,7 @@ fn main() {
         texture_size: 512,
         border_size: 2,
         mip_level_count: 1,
-        format: AttachmentFormat::RF32,
+        format: AttachmentFormat::R32F,
     };
 
     let (src_dataset, mut context) = PreprocessContext::from_cli(args).unwrap();
@@ -38,7 +38,7 @@ fn main() {
         texture_size: 512,
         border_size: 2,
         mip_level_count: 1,
-        format: AttachmentFormat::RgbU8,
+        format: AttachmentFormat::Rgb8U,
     };
 
     let (src_dataset, mut context) = PreprocessContext::from_cli(args).unwrap();

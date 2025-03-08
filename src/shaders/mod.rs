@@ -1,6 +1,7 @@
 use crate::terrain_data::AttachmentLabel;
 use bevy::{asset::embedded_asset, prelude::*};
 use itertools::Itertools;
+
 pub const DEFAULT_VERTEX_SHADER: &str = "embedded://bevy_terrain/shaders/render/vertex.wgsl";
 pub const DEFAULT_FRAGMENT_SHADER: &str = "embedded://bevy_terrain/shaders/render/fragment.wgsl";
 pub const PREPARE_PREPASS_SHADER: &str =
@@ -13,6 +14,7 @@ pub const REFINE_TILES_SHADER: &str =
 //     "embedded://bevy_terrain/shaders/preprocess/downsample.wgsl";
 pub(crate) const PICKING_SHADER: &str = "embedded://bevy_terrain/shaders/picking.wgsl";
 pub(crate) const DEPTH_COPY_SHADER: &str = "embedded://bevy_terrain/shaders/depth_copy.wgsl";
+pub(crate) const MIP_SHADER: &str = "embedded://bevy_terrain/shaders/mipmap.wgsl";
 
 #[derive(Default, Resource)]
 pub(crate) struct InternalShaders(Vec<Handle<Shader>>);
@@ -29,6 +31,7 @@ impl InternalShaders {
     }
 }
 
+// Todo: this could be implemented using shader defs with values
 fn load_bindings_shader(app: &mut App, attachments: &[AttachmentLabel]) {
     let source = include_str!("bindings.wgsl");
 
@@ -63,6 +66,7 @@ pub(crate) fn load_terrain_shaders(app: &mut App, attachments: &[AttachmentLabel
     embedded_asset!(app, "tiling_prepass/refine_tiles.wgsl");
     embedded_asset!(app, "picking.wgsl");
     embedded_asset!(app, "depth_copy.wgsl");
+    embedded_asset!(app, "mipmap.wgsl");
 
     load_bindings_shader(app, attachments);
 

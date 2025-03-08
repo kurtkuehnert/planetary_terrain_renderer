@@ -68,7 +68,6 @@ fn sample_surface_gradient(tile: AtlasTile, tangent_space: TangentSpace) -> vec3
     let lod   = max(0.0, log2(attachment.texture_size * scale));
     let ratio = saturate((lod - start) / (end - start));
 
-#ifdef TEST2
     if (ratio > 0.0 && tile.coordinate.lod == terrain.lod_count - 1) {
         let coord       = attachment.texture_size * uv.uv - 0.5;
         let coord_floor = floor(coord);
@@ -94,7 +93,6 @@ fn sample_surface_gradient(tile: AtlasTile, tangent_space: TangentSpace) -> vec3
         let upscaled_height_duv = attachment.texture_size * vec2(dot(Y, dX * height_matrix), dot(dY, X * height_matrix));
         height_duv = mix(height_duv, upscaled_height_duv, ratio);
     }
-#endif
 
     let height_dx = dot(height_duv, tile.coordinate.uv_dx);
     let height_dy = dot(height_duv, tile.coordinate.uv_dy);

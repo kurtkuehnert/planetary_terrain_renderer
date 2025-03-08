@@ -12,9 +12,7 @@ use slab::Slab;
 struct LoadingTile {
     handle: Handle<Image>,
     tile: TileAttachment,
-    texture_size: u32,
     format: AttachmentFormat,
-    mip_level_count: u32,
 }
 
 #[derive(Component)]
@@ -44,13 +42,8 @@ impl DefaultLoader {
     ) {
         self.loading_tiles.retain(|_, tile| {
             if asset_server.is_loaded(tile.handle.id()) {
-                // Todo: generating mip maps takes time -> this should run asynchronously
-
                 let image = images.get(tile.handle.id()).unwrap();
-
-                let mut data = AttachmentData::from_bytes(&image.data, tile.format);
-                data.generate_mipmaps(tile.texture_size, tile.mip_level_count);
-
+                let data = AttachmentData::from_bytes(&image.data, tile.format);
                 atlas.tile_loaded(tile.tile.clone(), data);
 
                 false
@@ -72,9 +65,7 @@ impl DefaultLoader {
                 self.loading_tiles.insert(LoadingTile {
                     handle: asset_server.load(path),
                     tile,
-                    texture_size: attachment.texture_size,
                     format: attachment.format,
-                    mip_level_count: attachment.mip_level_count,
                 });
             } else {
                 break;

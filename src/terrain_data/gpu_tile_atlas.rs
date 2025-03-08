@@ -1,4 +1,5 @@
 use crate::{
+    mipmap::{MipPipelineKey, MipPipelines},
     plugin::TerrainSettings,
     terrain::TerrainComponents,
     terrain_data::{
@@ -10,9 +11,9 @@ use crate::{
 use bevy::{
     prelude::*,
     render::{
+        Extract, MainWorld,
         render_resource::{binding_types::*, *},
         renderer::{RenderDevice, RenderQueue},
-        Extract, MainWorld,
     },
     tasks::{AsyncComputeTaskPool, Task},
     utils::HashMap,
@@ -194,6 +195,10 @@ pub(crate) struct GpuAtlasAttachment {
 
     pub(crate) _max_atlas_write_slots: u32,
     pub(crate) atlas_write_slots: Vec<AtlasTileAttachment>,
+
+    pub(crate) mip_pipeline: CachedComputePipelineId,
+    pub(crate) mips_to_generate: Vec<Vec<u32>>,
+    pub(crate) mip_bind_groups: Vec<Vec<BindGroup>>,
 }
 
 impl GpuAtlasAttachment {
@@ -231,7 +236,8 @@ impl GpuAtlasAttachment {
             format: buffer_info.format.render_format(),
             usage: TextureUsages::COPY_DST
                 | TextureUsages::COPY_SRC
-                | TextureUsages::TEXTURE_BINDING,
+                | TextureUsages::TEXTURE_BINDING
+                | TextureUsages::STORAGE_BINDING,
             view_formats: &[buffer_info.format.processing_format()],
         });
 
@@ -281,6 +287,42 @@ impl GpuAtlasAttachment {
             _bind_group: bind_group,
             _max_atlas_write_slots: max_atlas_write_slots,
             atlas_write_slots,
+
+            mip_pipeline: CachedComputePipelineId::INVALID,
+            mips_to_generate: vec![default(); buffer_info.mip_level_count as usize],
+            mip_bind_groups: vec![default(); buffer_info.mip_level_count as usize],
+        }
+    }
+
+    pub(crate) fn prepare_mip_bind_groups(
+        &mut self,
+        device: &RenderDevice,
+        mip_pipelines: &MipPipelines,
+    ) {
+        for (mip_level, atlas_indices) in self.mips_to_generate.iter().enumerate() {
+            for atlas_index in atlas_indices {
+                let mip_buffer = GpuBuffer::create(&device, atlas_index, BufferUsages::UNIFORM);
+                let parent_view = self.atlas_texture.create_view(&TextureViewDescriptor {
+                    format: Some(self.buffer_info.format.processing_format()),
+                    base_mip_level: mip_level as u32 - 1,
+                    mip_level_count: Some(1),
+                    ..default()
+                });
+                let child_view = self.atlas_texture.create_view(&TextureViewDescriptor {
+                    format: Some(self.buffer_info.format.processing_format()),
+                    base_mip_level: mip_level as u32,
+                    mip_level_count: Some(1),
+                    ..default()
+                });
+
+                self.mip_bind_groups[mip_level].push(device.create_bind_group(
+                    None,
+                    &mip_pipelines.mip_layouts[&self.buffer_info.format],
+                    &BindGroupEntries::sequential((&mip_buffer, &parent_view, &child_view)),
+                ));
+
+                // println!("Generating mip map {mip_level} for tile {atlas_index}");
+            }
         }
     }
 
@@ -356,6 +398,24 @@ pub struct GpuTileAtlas {
 }
 
 impl GpuTileAtlas {
+    pub(crate) fn generate_mip(&self, pass: &mut ComputePass, pipeline_cache: &PipelineCache) {
+        for attachment in self.attachments.values() {
+            let Some(pipeline) = pipeline_cache.get_compute_pipeline(attachment.mip_pipeline)
+            else {
+                return;
+            };
+
+            pass.set_pipeline(pipeline);
+
+            for bind_groups in &attachment.mip_bind_groups {
+                for bind_group in bind_groups {
+                    pass.set_bind_group(0, bind_group, &[]);
+                    pass.dispatch_workgroups(512 / 8, 512 / 8, 1);
+                }
+            }
+        }
+    }
+
     /// Creates a new gpu tile atlas and initializes its attachment textures.
     fn new(device: &RenderDevice, tile_atlas: &TileAtlas, settings: &TerrainSettings) -> Self {
         let attachments = tile_atlas
@@ -405,6 +465,25 @@ impl GpuTileAtlas {
                 &mut gpu_tile_atlas.upload_tiles,
             );
 
+            for attachment in gpu_tile_atlas.attachments.values_mut() {
+                attachment
+                    .mips_to_generate
+                    .iter_mut()
+                    .for_each(|atlas_indices| atlas_indices.clear());
+                attachment
+                    .mip_bind_groups
+                    .iter_mut()
+                    .for_each(|bind_groups| bind_groups.clear());
+            }
+
+            for tile in &gpu_tile_atlas.upload_tiles {
+                let attachment = gpu_tile_atlas.attachments.get_mut(&tile.label).unwrap();
+
+                for mip_level in 1..attachment.buffer_info.mip_level_count {
+                    attachment.mips_to_generate[mip_level as usize].push(tile.atlas_index);
+                }
+            }
+
             tile_atlas
                 .downloading_tiles
                 .extend(mem::take(&mut gpu_tile_atlas.download_tiles));
@@ -416,14 +495,35 @@ impl GpuTileAtlas {
     pub(crate) fn prepare(
         device: Res<RenderDevice>,
         queue: Res<RenderQueue>,
+        mip_pipelines: Res<MipPipelines>,
         mut gpu_tile_atlases: ResMut<TerrainComponents<GpuTileAtlas>>,
     ) {
         for gpu_tile_atlas in gpu_tile_atlases.values_mut() {
             for attachment in gpu_tile_atlas.attachments.values_mut() {
                 attachment.create_download_buffers(&device);
+                attachment.prepare_mip_bind_groups(&device, &mip_pipelines);
             }
 
             gpu_tile_atlas.upload_tiles(&queue);
+        }
+    }
+
+    pub(crate) fn queue(
+        pipeline_cache: Res<PipelineCache>,
+        mip_pipelines: ResMut<MipPipelines>,
+        mut pipelines: ResMut<SpecializedComputePipelines<MipPipelines>>,
+        mut gpu_tile_atlases: ResMut<TerrainComponents<GpuTileAtlas>>,
+    ) {
+        for gpu_tile_atlas in gpu_tile_atlases.values_mut() {
+            for attachment in gpu_tile_atlas.attachments.values_mut() {
+                attachment.mip_pipeline = pipelines.specialize(
+                    &pipeline_cache,
+                    &mip_pipelines,
+                    MipPipelineKey {
+                        format: attachment.buffer_info.format,
+                    },
+                );
+            }
         }
     }
 
@@ -436,30 +536,21 @@ impl GpuTileAtlas {
     fn upload_tiles(&mut self, queue: &RenderQueue) {
         for tile in self.upload_tiles.drain(..) {
             let attachment = self.attachments.get(&tile.label).unwrap();
-            let mut start = 0;
 
-            for mip_level in 0..attachment.buffer_info.mip_level_count {
-                let side_size = attachment.buffer_info.actual_side_size >> mip_level;
-                let texture_size = attachment.buffer_info.texture_size >> mip_level;
-                let end = start + (side_size * texture_size) as usize;
-
-                queue.write_texture(
-                    attachment.buffer_info.image_copy_texture(
-                        &attachment.atlas_texture,
-                        tile.atlas_index,
-                        mip_level,
-                    ),
-                    &tile.data.bytes()[start..end],
-                    ImageDataLayout {
-                        offset: 0,
-                        bytes_per_row: Some(side_size),
-                        rows_per_image: Some(texture_size),
-                    },
-                    attachment.buffer_info.image_copy_size(mip_level),
-                );
-
-                start = end;
-            }
+            queue.write_texture(
+                attachment.buffer_info.image_copy_texture(
+                    &attachment.atlas_texture,
+                    tile.atlas_index,
+                    0,
+                ),
+                tile.data.bytes(),
+                ImageDataLayout {
+                    offset: 0,
+                    bytes_per_row: Some(attachment.buffer_info.actual_side_size),
+                    rows_per_image: Some(attachment.buffer_info.texture_size),
+                },
+                attachment.buffer_info.image_copy_size(0),
+            );
         }
     }
 
