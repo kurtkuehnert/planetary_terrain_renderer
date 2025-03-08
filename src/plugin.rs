@@ -1,23 +1,15 @@
 use crate::{
     formats::TiffLoader,
-    mipmap::{MipNode, MipPipelines},
-    prelude::TerrainConfig,
+    preprocess::{MipNode, MipPipelines},
     render::{
-        GpuTerrain, GpuTerrainView,
-        terrain_pass::{
-            DepthCopyPipeline, TerrainItem, TerrainPass, extract_terrain_phases,
-            prepare_terrain_depth_textures,
-        },
-        tiling_prepass::{
-            TerrainTilingPrepassPipelines, TilingPrepass, TilingPrepassItem, queue_tiling_prepass,
-        },
+        DepthCopyPipeline, GpuTerrain, GpuTerrainView, TerrainItem, TerrainPass,
+        TerrainTilingPrepassPipelines, TilingPrepass, TilingPrepassItem, extract_terrain_phases,
+        prepare_terrain_depth_textures, queue_tiling_prepass,
     },
     shaders::{InternalShaders, load_terrain_shaders},
-    terrain::TerrainComponents,
+    terrain::{TerrainComponents, TerrainConfig},
     terrain_data::{
-        GpuTileAtlas, TileAtlas, TileTree,
-        attachment::AttachmentLabel,
-        tile_loader::{finish_loading, start_loading},
+        AttachmentLabel, GpuTileAtlas, TileAtlas, TileTree, finish_loading, start_loading,
     },
     terrain_view::TerrainViewComponents,
 };

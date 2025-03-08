@@ -1,6 +1,6 @@
 use crate::{
     math::{Coordinate, SurfaceApproximation},
-    prelude::TileTree,
+    terrain_data::TileTree,
     terrain_view::TerrainViewComponents,
 };
 use bevy::{color::palettes::basic, math::DVec2, prelude::*};

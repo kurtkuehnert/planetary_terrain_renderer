@@ -1,15 +1,15 @@
+use bevy::math::{DMat3, DVec2, IVec2};
+use std::mem;
+
 mod coordinate;
 mod spheroid;
 #[cfg(feature = "high_precision")]
 mod surface_approximation;
 mod terrain_shape;
 
-use bevy::math::{DMat3, DVec2, IVec2};
-use std::mem;
-
 #[cfg(feature = "high_precision")]
-pub use crate::math::surface_approximation::SurfaceApproximation;
-pub use crate::math::{
+pub use self::surface_approximation::SurfaceApproximation;
+pub use self::{
     coordinate::{Coordinate, TileCoordinate, ViewCoordinate},
     terrain_shape::TerrainShape,
 };

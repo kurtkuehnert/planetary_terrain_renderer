@@ -1,14 +1,11 @@
 use crate::{
     debug::DebugTerrain,
     render::{
-        terrain_bind_group::SetTerrainBindGroup,
-        terrain_pass::{TerrainItem, TERRAIN_DEPTH_FORMAT},
-        terrain_view_bind_group::{DrawTerrainCommand, SetTerrainViewBindGroup},
-        tiling_prepass::TerrainTilingPrepassPipelines,
-        GpuTerrainView,
+        DrawTerrainCommand, GpuTerrainView, SetTerrainBindGroup, SetTerrainViewBindGroup,
+        TERRAIN_DEPTH_FORMAT, TerrainItem, TerrainTilingPrepassPipelines,
     },
     shaders::{DEFAULT_FRAGMENT_SHADER, DEFAULT_VERTEX_SHADER},
-    spawn::{spawn_terrains, TerrainsToSpawn},
+    spawn::{TerrainsToSpawn, spawn_terrains},
     terrain::TerrainComponents,
     terrain_data::GpuTileAtlas,
     terrain_view::TerrainViewComponents,
@@ -21,7 +18,8 @@ use bevy::{
     },
     prelude::*,
     render::{
-        render_asset::{prepare_assets, RenderAssetPlugin, RenderAssets},
+        Extract, Render, RenderApp, RenderSet,
+        render_asset::{RenderAssetPlugin, RenderAssets, prepare_assets},
         render_phase::{
             AddRenderCommand, DrawFunctions, PhaseItemExtraIndex, SetItemPipeline,
             ViewSortedRenderPhases,
@@ -30,7 +28,6 @@ use bevy::{
         renderer::RenderDevice,
         sync_world::MainEntity,
         texture::GpuImage,
-        Extract, Render, RenderApp, RenderSet,
     },
 };
 use derive_more::derive::From;
@@ -432,7 +429,7 @@ pub(crate) fn queue_terrain<M: Material>(
 
             let mut flags = TerrainPipelineFlags::from_msaa_samples(msaa.samples());
 
-            let gpu_tile_atlas = gpu_tile_atlases.get(&terrain.id()).unwrap();
+            let gpu_tile_atlas = &gpu_tile_atlases[&terrain.id()];
             if gpu_tile_atlas.is_spherical {
                 flags |= TerrainPipelineFlags::SPHERICAL;
             }

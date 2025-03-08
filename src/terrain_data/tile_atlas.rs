@@ -2,12 +2,11 @@ use crate::{
     big_space::GridCell,
     math::{TerrainShape, TileCoordinate},
     plugin::TerrainSettings,
-    render::terrain_bind_group::TerrainUniform,
+    render::TerrainUniform,
     terrain::TerrainConfig,
     terrain_data::{
-        attachment::{AttachmentConfig, AttachmentData, AttachmentFormat, AttachmentLabel},
-        tile_loader::DefaultLoader,
-        tile_tree::{TileTree, TileTreeEntry},
+        Attachment, AttachmentData, AttachmentLabel, AttachmentTile, AttachmentTileWithData,
+        DefaultLoader, TileTree, TileTreeEntry,
     },
     terrain_view::TerrainViewComponents,
 };
@@ -18,50 +17,7 @@ use bevy::{
     tasks::Task,
     utils::{HashMap, HashSet},
 };
-use std::{collections::VecDeque, path::PathBuf};
-
-#[derive(Clone, Debug, Default)]
-pub struct TileAttachment {
-    pub(crate) coordinate: TileCoordinate,
-    pub(crate) label: AttachmentLabel,
-}
-
-#[derive(Clone)]
-pub(crate) struct AtlasTileAttachmentWithData {
-    pub(crate) atlas_index: u32,
-    pub(crate) label: AttachmentLabel,
-    pub(crate) data: AttachmentData,
-}
-
-/// An attachment of a [`TileAtlas`].
-pub struct AtlasAttachment {
-    pub(crate) path: PathBuf,
-    pub(crate) texture_size: u32,
-    pub(crate) center_size: u32,
-    pub(crate) border_size: u32,
-    pub(crate) mip_level_count: u32,
-    pub(crate) format: AttachmentFormat,
-}
-
-impl AtlasAttachment {
-    fn new(config: &AttachmentConfig, path: &str) -> Self {
-        let path = if path.starts_with("assets") {
-            path[7..].to_string()
-        } else {
-            path.to_string()
-        };
-        // let path = format!("assets/{path}/data/{name}");
-
-        Self {
-            path: PathBuf::from(path),
-            texture_size: config.texture_size,
-            center_size: config.center_size(),
-            border_size: config.border_size,
-            mip_level_count: config.mip_level_count,
-            format: config.format,
-        }
-    }
-}
+use std::collections::VecDeque;
 
 /// The current state of a tile of a [`TileAtlas`].
 ///
@@ -103,13 +59,13 @@ struct TileState {
 #[require(Transform, Visibility, NoFrustumCulling, DefaultLoader)]
 #[cfg_attr(feature = "high_precision", require(GridCell))]
 pub struct TileAtlas {
-    pub(crate) attachments: HashMap<AttachmentLabel, AtlasAttachment>, // stores the attachment data
+    pub(crate) attachments: HashMap<AttachmentLabel, Attachment>, // stores the attachment data
     tile_states: HashMap<TileCoordinate, TileState>,
     unused_indices: VecDeque<u32>,
     existing_tiles: HashSet<TileCoordinate>,
-    pub(crate) uploading_tiles: Vec<AtlasTileAttachmentWithData>,
-    pub(crate) downloading_tiles: Vec<Task<AtlasTileAttachmentWithData>>,
-    pub(crate) to_load: Vec<TileAttachment>,
+    pub(crate) uploading_tiles: Vec<AttachmentTileWithData>,
+    pub(crate) downloading_tiles: Vec<Task<AttachmentTileWithData>>,
+    pub(crate) to_load: Vec<AttachmentTile>,
 
     pub(crate) lod_count: u32,
     pub(crate) min_height: f32,
@@ -130,12 +86,7 @@ impl TileAtlas {
         let attachments = config
             .attachments
             .iter()
-            .map(|(label, attachment)| {
-                (
-                    label.clone(),
-                    AtlasAttachment::new(attachment, &config.path),
-                )
-            })
+            .map(|(label, attachment)| (label.clone(), Attachment::new(attachment, &config.path)))
             .collect();
 
         let terrain_buffer = buffers.add(ShaderStorageBuffer::with_size(
@@ -189,7 +140,7 @@ impl TileAtlas {
         }
     }
 
-    pub(crate) fn tile_loaded(&mut self, tile: TileAttachment, data: AttachmentData) {
+    pub(crate) fn tile_loaded(&mut self, tile: AttachmentTile, data: AttachmentData) {
         if let Some(tile_state) = self.tile_states.get_mut(&tile.coordinate) {
             tile_state.state = match tile_state.state {
                 LoadingState::Loading(1) => LoadingState::Loaded,
@@ -199,7 +150,7 @@ impl TileAtlas {
                 }
             };
 
-            self.uploading_tiles.push(AtlasTileAttachmentWithData {
+            self.uploading_tiles.push(AttachmentTileWithData {
                 atlas_index: tile_state.atlas_index,
                 label: tile.label,
                 data,
@@ -270,7 +221,7 @@ impl TileAtlas {
             );
 
             for label in self.attachments.keys() {
-                self.to_load.push(TileAttachment {
+                self.to_load.push(AttachmentTile {
                     coordinate: tile_coordinate,
                     label: label.clone(),
                 });

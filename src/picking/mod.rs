@@ -1,6 +1,6 @@
 use crate::{
     big_space::GridCell,
-    render::terrain_pass::{TerrainPass, TerrainViewDepthTexture},
+    render::{TerrainPass, TerrainViewDepthTexture},
     shaders::PICKING_SHADER,
 };
 use bevy::{
@@ -9,6 +9,7 @@ use bevy::{
     ecs::{component::ComponentId, query::QueryItem, world::DeferredWorld},
     prelude::*,
     render::{
+        RenderApp,
         extract_component::{ExtractComponent, ExtractComponentPlugin},
         gpu_readback::{Readback, ReadbackComplete},
         render_asset::RenderAssets,
@@ -23,7 +24,6 @@ use bevy::{
         },
         renderer::{RenderContext, RenderDevice},
         storage::{GpuShaderStorageBuffer, ShaderStorageBuffer},
-        RenderApp,
     },
     window::PrimaryWindow,
 };
@@ -43,13 +43,14 @@ pub fn picking_system(
 
     for (camera, global_transform, &cell, picking_data) in &camera {
         let buffer = buffers.get_mut(&picking_data.buffer).unwrap();
-        buffer.set_data(GpuPickingData {
+        let data = GpuPickingData {
             cursor_coords,
             depth: 0.0,
             stencil: 255,
             world_from_clip: global_transform.compute_matrix() * camera.clip_from_view().inverse(),
             cell: IVec3::new(cell.x, cell.y, cell.z),
-        });
+        };
+        buffer.set_data(data);
     }
 }
 

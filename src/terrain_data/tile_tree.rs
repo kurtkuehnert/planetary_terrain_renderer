@@ -1,7 +1,7 @@
 use crate::{
     big_space::GridCell,
     math::{Coordinate, TerrainShape, TileCoordinate},
-    render::terrain_view_bind_group::{TerrainViewUniform, TileTreeUniform},
+    render::{TerrainViewUniform, TileTreeUniform},
     terrain::TerrainConfig,
     terrain_data::{INVALID_ATLAS_INDEX, INVALID_LOD, TileAtlas},
     terrain_view::{TerrainViewComponents, TerrainViewConfig},

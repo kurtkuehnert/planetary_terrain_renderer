@@ -1,12 +1,8 @@
 //! Contains a debug resource and systems controlling it to visualize different internal
 //! data of the plugin.
 use crate::{
-    debug::{
-        approximation_debug::debug_surface_approximation, camera::debug_camera_controller,
-        orbital_camera::orbital_camera_controller,
-    },
-    prelude::TileAtlas,
-    terrain_data::TileTree,
+    debug::{debug_camera_controller, debug_surface_approximation, orbital_camera_controller},
+    terrain_data::{TileAtlas, TileTree},
     terrain_view::TerrainViewComponents,
 };
 
@@ -17,10 +13,10 @@ use bevy::{
 };
 mod approximation_debug;
 mod camera;
-
 mod orbital_camera;
 
-pub use crate::debug::{camera::DebugCameraController, orbital_camera::OrbitalCameraController};
+pub(crate) use self::{approximation_debug::*, camera::*, orbital_camera::*};
+pub use self::{camera::DebugCameraController, orbital_camera::OrbitalCameraController};
 
 #[derive(Asset, AsBindGroup, TypePath, Clone, Default)]
 pub struct DebugTerrainMaterial {}

@@ -1,7 +1,7 @@
 use crate::{
     math::{TileCoordinate, ViewCoordinate},
-    render::tiling_prepass::TerrainTilingPrepassPipelines,
-    terrain_data::{TileTree, tile_tree::TileTreeEntry},
+    render::TerrainTilingPrepassPipelines,
+    terrain_data::{TileTree, TileTreeEntry},
     terrain_view::TerrainViewComponents,
 };
 use bevy::{
@@ -293,10 +293,7 @@ impl<const I: usize, P: PhaseItem> RenderCommand<P> for SetTerrainViewBindGroup<
         gpu_terrain_views: SystemParamItem<'w, '_, Self::Param>,
         pass: &mut TrackedRenderPass<'w>,
     ) -> RenderCommandResult {
-        let gpu_terrain_view = gpu_terrain_views
-            .into_inner()
-            .get(&(item.main_entity().id(), view))
-            .unwrap();
+        let gpu_terrain_view = &gpu_terrain_views.into_inner()[&(item.main_entity().id(), view)];
 
         if let Some(bind_group) = &gpu_terrain_view.terrain_view_bind_group {
             pass.set_bind_group(I, bind_group, &[]);
@@ -322,10 +319,7 @@ impl<P: PhaseItem> RenderCommand<P> for DrawTerrainCommand {
         gpu_terrain_views: SystemParamItem<'w, '_, Self::Param>,
         pass: &mut TrackedRenderPass<'w>,
     ) -> RenderCommandResult {
-        let gpu_terrain_view = gpu_terrain_views
-            .into_inner()
-            .get(&(item.main_entity().id(), view))
-            .unwrap();
+        let gpu_terrain_view = &gpu_terrain_views.into_inner()[&(item.main_entity().id(), view)];
 
         pass.set_stencil_reference(gpu_terrain_view.order);
         pass.draw_indirect(&gpu_terrain_view.indirect_buffer, 0);

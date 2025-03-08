@@ -1,7 +1,4 @@
-use crate::terrain_data::{
-    attachment::{AttachmentData, AttachmentFormat},
-    tile_atlas::{TileAtlas, TileAttachment},
-};
+use crate::terrain_data::{AttachmentData, AttachmentFormat, AttachmentTile, TileAtlas};
 use bevy::{
     asset::{AssetServer, Assets, Handle},
     image::Image,
@@ -11,7 +8,7 @@ use slab::Slab;
 
 struct LoadingTile {
     handle: Handle<Image>,
-    tile: TileAttachment,
+    tile: AttachmentTile,
     format: AttachmentFormat,
 }
 
@@ -29,7 +26,7 @@ impl Default for DefaultLoader {
 }
 
 impl DefaultLoader {
-    fn to_load_next(&self, tiles: &mut Vec<TileAttachment>) -> Option<TileAttachment> {
+    fn to_load_next(&self, tiles: &mut Vec<AttachmentTile>) -> Option<AttachmentTile> {
         // Todo: tile prioritization goes here
         tiles.pop()
     }
@@ -56,7 +53,7 @@ impl DefaultLoader {
     fn start_loading(&mut self, atlas: &mut TileAtlas, asset_server: &mut AssetServer) {
         while self.loading_tiles.len() < self.loading_tiles.capacity() {
             if let Some(tile) = self.to_load_next(&mut atlas.to_load) {
-                let attachment = atlas.attachments.get(&tile.label).unwrap();
+                let attachment = &atlas.attachments[&tile.label];
 
                 let path = tile
                     .coordinate

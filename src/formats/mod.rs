@@ -1,3 +1,3 @@
 mod tiff;
 
-pub use crate::formats::tiff::TiffLoader;
+pub use self::tiff::TiffLoader;

@@ -1,6 +1,6 @@
 use crate::{
     terrain::TerrainComponents,
-    terrain_data::{GpuTileAtlas, TileAtlas, gpu_tile_atlas::GpuAtlasAttachment},
+    terrain_data::{GpuAttachment, GpuTileAtlas, TileAtlas},
     util::GpuBuffer,
 };
 use bevy::{
@@ -57,7 +57,7 @@ struct AttachmentConfig {
 }
 
 impl AttachmentConfig {
-    fn new(attachment: &GpuAtlasAttachment) -> Self {
+    fn new(attachment: &GpuAttachment) -> Self {
         Self {
             center_size: attachment.buffer_info.center_size as f32,
             texture_size: attachment.buffer_info.texture_size as f32,
@@ -181,7 +181,7 @@ impl GpuTerrain {
         tile_atlases: Extract<Query<(Entity, &TileAtlas), Added<TileAtlas>>>,
     ) {
         for (terrain, tile_atlas) in &tile_atlases {
-            let gpu_tile_atlas = gpu_tile_atlases.get(&terrain).unwrap();
+            let gpu_tile_atlas = &gpu_tile_atlases[&terrain];
 
             gpu_terrains.insert(
                 terrain,
@@ -235,7 +235,7 @@ impl<const I: usize, P: PhaseItem> RenderCommand<P> for SetTerrainBindGroup<I> {
         gpu_terrains: SystemParamItem<'w, '_, Self::Param>,
         pass: &mut TrackedRenderPass<'w>,
     ) -> RenderCommandResult {
-        let gpu_terrain = gpu_terrains.into_inner().get(&item.entity()).unwrap();
+        let gpu_terrain = &gpu_terrains.into_inner()[&item.entity()];
 
         if let Some(bind_group) = &gpu_terrain.terrain_bind_group {
             pass.set_bind_group(I, bind_group, &[]);

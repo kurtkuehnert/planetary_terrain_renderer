@@ -249,8 +249,8 @@ impl render_graph::Node for TilingPrepass {
                     continue;
                 };
 
-                let gpu_terrain = gpu_terrains.get(&terrain).unwrap();
-                let gpu_terrain_view = gpu_terrain_views.get(&(terrain, view)).unwrap();
+                let gpu_terrain = &gpu_terrains[&terrain];
+                let gpu_terrain_view = &gpu_terrain_views[&(terrain, view)];
 
                 let Some(terrain_bind_group) = &gpu_terrain.terrain_bind_group else {
                     continue;
@@ -304,7 +304,7 @@ pub(crate) fn queue_tiling_prepass(
     gpu_tile_atlases: Res<TerrainComponents<GpuTileAtlas>>,
 ) {
     for &(terrain, view) in gpu_terrain_views.keys() {
-        let gpu_tile_atlas = gpu_tile_atlases.get(&terrain).unwrap();
+        let gpu_tile_atlas = &gpu_tile_atlases[&terrain];
 
         let mut key = TilingPrepassPipelineKey::NONE;
 

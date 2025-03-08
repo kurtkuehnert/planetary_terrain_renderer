@@ -1,10 +1,11 @@
-use crate::prelude::{
-    TerrainConfig, TerrainMaterial, TerrainSettings, TerrainViewComponents, TerrainViewConfig,
-    TileAtlas, TileTree,
+use crate::{
+    plugin::TerrainSettings,
+    render::TerrainMaterial,
+    terrain::TerrainConfig,
+    terrain_data::{TileAtlas, TileTree},
+    terrain_view::{TerrainViewComponents, TerrainViewConfig},
 };
-use bevy::ecs::system::SystemState;
-use bevy::prelude::*;
-use bevy::render::storage::ShaderStorageBuffer;
+use bevy::{ecs::system::SystemState, prelude::*, render::storage::ShaderStorageBuffer};
 use big_space::floating_origins::BigSpace;
 
 #[derive(Clone)]

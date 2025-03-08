@@ -1,3 +1,7 @@
+mod mipmap;
+
+pub(crate) use self::mipmap::*;
+
 // use crate::{
 //     formats::TiffLoader,
 //     preprocess::{gpu_preprocessor::GpuPreprocessor, preprocessor::PreprocessTaskType},

@@ -1,7 +1,9 @@
+use crate::math::TileCoordinate;
 use bevy::render::render_resource::TextureFormat;
 use bytemuck::cast_slice;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 use std::{fmt::Error, str::FromStr};
 use strum_macros::EnumIter;
 
@@ -66,16 +68,6 @@ impl FromStr for AttachmentFormat {
 }
 
 impl AttachmentFormat {
-    pub(crate) fn id(self) -> u32 {
-        match self {
-            AttachmentFormat::Rgb8U => 5,
-            AttachmentFormat::Rgba8U => 0,
-            AttachmentFormat::R16U => 1,
-            AttachmentFormat::Rg16U => 3,
-            AttachmentFormat::R32F => 4,
-            AttachmentFormat::R16I => 6,
-        }
-    }
     pub(crate) fn render_format(self) -> TextureFormat {
         match self {
             AttachmentFormat::Rgb8U => TextureFormat::Rgba8UnormSrgb,
@@ -123,8 +115,8 @@ impl Default for AttachmentConfig {
     fn default() -> Self {
         Self {
             texture_size: 512,
-            border_size: 1,
-            mip_level_count: 1,
+            border_size: 2,
+            mip_level_count: 2,
             format: AttachmentFormat::R16U,
         }
     }
@@ -178,7 +170,49 @@ impl AttachmentData {
             AttachmentData::R16I(data) => cast_slice(data),
             AttachmentData::Rg16U(data) => cast_slice(data),
             AttachmentData::R32F(data) => cast_slice(data),
-            //  AttachmentData::None => panic!("Attachment has no data."),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct AttachmentTile {
+    pub(crate) coordinate: TileCoordinate,
+    pub(crate) label: AttachmentLabel,
+}
+
+#[derive(Clone)]
+pub(crate) struct AttachmentTileWithData {
+    pub(crate) atlas_index: u32,
+    pub(crate) label: AttachmentLabel,
+    pub(crate) data: AttachmentData,
+}
+
+/// An attachment of a [`TileAtlas`].
+pub struct Attachment {
+    pub(crate) path: PathBuf,
+    pub(crate) texture_size: u32,
+    pub(crate) center_size: u32,
+    pub(crate) border_size: u32,
+    pub(crate) mip_level_count: u32,
+    pub(crate) format: AttachmentFormat,
+}
+
+impl Attachment {
+    pub(crate) fn new(config: &AttachmentConfig, path: &str) -> Self {
+        let path = if path.starts_with("assets") {
+            path[7..].to_string()
+        } else {
+            path.to_string()
+        };
+        // let path = format!("assets/{path}/data/{name}");
+
+        Self {
+            path: PathBuf::from(path),
+            texture_size: config.texture_size,
+            center_size: config.center_size(),
+            border_size: config.border_size,
+            mip_level_count: config.mip_level_count,
+            format: config.format,
         }
     }
 }
