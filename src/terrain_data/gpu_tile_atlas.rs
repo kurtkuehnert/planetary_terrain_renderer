@@ -36,7 +36,8 @@ impl GpuTileAtlas {
         for attachment in self.attachments.values() {
             let Some(pipeline) = pipeline_cache.get_compute_pipeline(attachment.mip_pipeline)
             else {
-                return;
+                dbg!("Skipped mipmap generation");
+                return; // Todo: In case the pipeline has not been loaded yet, but a mip map should be created, we should not skip and clear the mip map generation list
             };
 
             pass.set_pipeline(pipeline);
@@ -44,7 +45,16 @@ impl GpuTileAtlas {
             for bind_groups in &attachment.mip_bind_groups {
                 for bind_group in bind_groups {
                     pass.set_bind_group(0, bind_group, &[]);
-                    pass.dispatch_workgroups(512 / 8, 512 / 8, 1);
+                    assert_eq!(
+                        attachment.buffer_info.texture_size % 8,
+                        0,
+                        "Currently mipmap generation assumes the texture size to be a multiple of eight."
+                    );
+                    pass.dispatch_workgroups(
+                        attachment.buffer_info.texture_size / 8,
+                        attachment.buffer_info.texture_size / 8,
+                        1,
+                    );
                 }
             }
         }
@@ -134,7 +144,6 @@ impl GpuTileAtlas {
     ) {
         for gpu_tile_atlas in gpu_tile_atlases.values_mut() {
             for attachment in gpu_tile_atlas.attachments.values_mut() {
-                attachment.create_download_buffers(&device);
                 attachment.prepare_mip_bind_groups(&device, &mip_pipelines);
             }
 
@@ -161,9 +170,9 @@ impl GpuTileAtlas {
         }
     }
 
-    pub(crate) fn cleanup(mut gpu_tile_atlases: ResMut<TerrainComponents<GpuTileAtlas>>) {
+    pub(crate) fn _cleanup(mut gpu_tile_atlases: ResMut<TerrainComponents<GpuTileAtlas>>) {
         for gpu_tile_atlas in gpu_tile_atlases.values_mut() {
-            gpu_tile_atlas.start_downloading_tiles();
+            gpu_tile_atlas._start_downloading_tiles();
         }
     }
 
@@ -188,11 +197,11 @@ impl GpuTileAtlas {
         }
     }
 
-    fn start_downloading_tiles(&mut self) {
+    fn _start_downloading_tiles(&mut self) {
         for attachment in self.attachments.values_mut() {
             let buffer_info = attachment.buffer_info;
-            let download_buffers = mem::take(&mut attachment.download_buffers);
-            let atlas_write_slots = mem::take(&mut attachment.atlas_write_slots);
+            let download_buffers = mem::take(&mut attachment._download_buffers);
+            let atlas_write_slots = mem::take(&mut attachment._atlas_write_slots);
 
             self.download_tiles
                 .extend(iter::zip(atlas_write_slots, download_buffers).map(

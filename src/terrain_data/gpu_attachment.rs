@@ -181,16 +181,17 @@ pub(crate) struct GpuAttachment {
     pub(crate) buffer_info: AtlasBufferInfo,
 
     pub(crate) atlas_texture: Texture,
-    pub(crate) _atlas_write_section: GpuBuffer<()>,
-    pub(crate) download_buffers: Vec<GpuBuffer<()>>,
-    pub(crate) _bind_group: BindGroup,
-
-    pub(crate) _max_atlas_write_slots: u32,
-    pub(crate) atlas_write_slots: Vec<AtlasTileAttachment>,
 
     pub(crate) mip_pipeline: CachedComputePipelineId,
+    pub(crate) mip_views: Vec<TextureView>,
     pub(crate) mips_to_generate: Vec<Vec<u32>>,
     pub(crate) mip_bind_groups: Vec<Vec<BindGroup>>,
+
+    pub(crate) _atlas_write_section: GpuBuffer<()>,
+    pub(crate) _download_buffers: Vec<GpuBuffer<()>>,
+    pub(crate) _bind_group: BindGroup,
+    pub(crate) _max_atlas_write_slots: u32,
+    pub(crate) _atlas_write_slots: Vec<AtlasTileAttachment>,
 }
 
 impl GpuAttachment {
@@ -212,8 +213,6 @@ impl GpuAttachment {
         let atlas_write_slots = Vec::with_capacity(max_atlas_write_slots as usize);
 
         let buffer_info = AtlasBufferInfo::new(attachment, tile_atlas.lod_count);
-
-        // dbg!(&buffer_info);
 
         let atlas_texture = device.create_texture(&TextureDescriptor {
             label: Some(&format!("{name}_attachment")),
@@ -270,19 +269,31 @@ impl GpuAttachment {
             )),
         );
 
+        let mip_views = (0..buffer_info.mip_level_count)
+            .map(|mip_level| {
+                atlas_texture.create_view(&TextureViewDescriptor {
+                    format: Some(buffer_info.format.processing_format()),
+                    base_mip_level: mip_level,
+                    mip_level_count: Some(1),
+                    ..default()
+                })
+            })
+            .collect_vec();
+
         Self {
             index,
             buffer_info,
             atlas_texture,
-            _atlas_write_section: atlas_write_section,
-            download_buffers: default(),
-            _bind_group: bind_group,
-            _max_atlas_write_slots: max_atlas_write_slots,
-            atlas_write_slots,
-
             mip_pipeline: CachedComputePipelineId::INVALID,
+            mip_views,
             mips_to_generate: vec![default(); buffer_info.mip_level_count as usize],
             mip_bind_groups: vec![default(); buffer_info.mip_level_count as usize],
+
+            _atlas_write_section: atlas_write_section,
+            _download_buffers: default(),
+            _bind_group: bind_group,
+            _max_atlas_write_slots: max_atlas_write_slots,
+            _atlas_write_slots: atlas_write_slots,
         }
     }
 
@@ -293,42 +304,30 @@ impl GpuAttachment {
     ) {
         for (mip_level, atlas_indices) in self.mips_to_generate.iter().enumerate() {
             for atlas_index in atlas_indices {
-                let mip_buffer = GpuBuffer::create(&device, atlas_index, BufferUsages::UNIFORM);
-                let parent_view = self.atlas_texture.create_view(&TextureViewDescriptor {
-                    format: Some(self.buffer_info.format.processing_format()),
-                    base_mip_level: mip_level as u32 - 1,
-                    mip_level_count: Some(1),
-                    ..default()
-                });
-                let child_view = self.atlas_texture.create_view(&TextureViewDescriptor {
-                    format: Some(self.buffer_info.format.processing_format()),
-                    base_mip_level: mip_level as u32,
-                    mip_level_count: Some(1),
-                    ..default()
-                });
-
                 self.mip_bind_groups[mip_level].push(device.create_bind_group(
                     None,
                     &mip_pipelines.mip_layouts[&self.buffer_info.format],
-                    &BindGroupEntries::sequential((&mip_buffer, &parent_view, &child_view)),
+                    &BindGroupEntries::sequential((
+                        &GpuBuffer::create(device, atlas_index, BufferUsages::UNIFORM),
+                        &self.mip_views[mip_level - 1],
+                        &self.mip_views[mip_level],
+                    )),
                 ));
-
-                // println!("Generating mip map {mip_level} for tile {atlas_index}");
             }
         }
     }
 
     pub(crate) fn _reserve_write_slot(&mut self, tile: AtlasTileAttachment) -> Option<u32> {
-        if self.atlas_write_slots.len() < self._max_atlas_write_slots as usize {
-            self.atlas_write_slots.push(tile);
-            Some(self.atlas_write_slots.len() as u32 - 1)
+        if self._atlas_write_slots.len() < self._max_atlas_write_slots as usize {
+            self._atlas_write_slots.push(tile);
+            Some(self._atlas_write_slots.len() as u32 - 1)
         } else {
             None
         }
     }
 
     pub(crate) fn _copy_tiles_to_write_section(&self, command_encoder: &mut CommandEncoder) {
-        for (section_index, tile) in self.atlas_write_slots.iter().enumerate() {
+        for (section_index, tile) in self._atlas_write_slots.iter().enumerate() {
             command_encoder.copy_texture_to_buffer(
                 self.buffer_info
                     .image_copy_texture(&self.atlas_texture, tile.atlas_index, 0),
@@ -340,7 +339,7 @@ impl GpuAttachment {
     }
 
     pub(crate) fn _copy_tiles_from_write_section(&self, command_encoder: &mut CommandEncoder) {
-        for (section_index, tile) in self.atlas_write_slots.iter().enumerate() {
+        for (section_index, tile) in self._atlas_write_slots.iter().enumerate() {
             command_encoder.copy_buffer_to_texture(
                 self.buffer_info
                     ._image_copy_buffer(&self._atlas_write_section, section_index as u32),
@@ -352,7 +351,8 @@ impl GpuAttachment {
     }
 
     pub(crate) fn _download_tiles(&self, command_encoder: &mut CommandEncoder) {
-        for (tile, download_buffer) in iter::zip(&self.atlas_write_slots, &self.download_buffers) {
+        for (tile, download_buffer) in iter::zip(&self._atlas_write_slots, &self._download_buffers)
+        {
             command_encoder.copy_texture_to_buffer(
                 self.buffer_info
                     .image_copy_texture(&self.atlas_texture, tile.atlas_index, 0),
@@ -362,8 +362,8 @@ impl GpuAttachment {
         }
     }
 
-    pub(crate) fn create_download_buffers(&mut self, device: &RenderDevice) {
-        self.download_buffers = (0..self.atlas_write_slots.len())
+    pub(crate) fn _create_download_buffers(&mut self, device: &RenderDevice) {
+        self._download_buffers = (0..self._atlas_write_slots.len())
             .map(|_| {
                 GpuBuffer::empty_sized_labeled(
                     None,

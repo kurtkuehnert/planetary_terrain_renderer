@@ -1,6 +1,6 @@
 use crate::{
     formats::TiffLoader,
-    preprocess::{MipNode, MipPipelines},
+    preprocess::{MipPipelines, MipPrepass},
     render::{
         DepthCopyPipeline, GpuTerrain, GpuTerrainView, TerrainItem, TerrainPass,
         TerrainTilingPrepassPipelines, TilingPrepass, TilingPrepassItem, extract_terrain_phases,
@@ -124,7 +124,7 @@ impl Plugin for TerrainPlugin {
                     sort_phase_system::<TerrainItem>.in_set(RenderSet::PhaseSort),
                     prepare_terrain_depth_textures.in_set(RenderSet::PrepareResources),
                     (queue_tiling_prepass, GpuTileAtlas::queue).in_set(RenderSet::Queue),
-                    GpuTileAtlas::cleanup
+                    GpuTileAtlas::_cleanup
                         .before(World::clear_entities)
                         .in_set(RenderSet::Cleanup),
                 ),
@@ -139,10 +139,10 @@ impl Plugin for TerrainPlugin {
             .sub_app_mut(RenderApp)
             .world_mut()
             .resource_mut::<RenderGraph>();
+        render_graph.add_node(MipPrepass, MipPrepass);
         render_graph.add_node(TilingPrepass, TilingPrepass);
+        render_graph.add_node_edge(MipPrepass, TilingPrepass);
         render_graph.add_node_edge(TilingPrepass, CameraDriverLabel);
-        render_graph.add_node(MipNode, MipNode);
-        render_graph.add_node_edge(MipNode, CameraDriverLabel);
     }
 
     fn finish(&self, app: &mut App) {

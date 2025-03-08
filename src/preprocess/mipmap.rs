@@ -99,9 +99,9 @@ impl SpecializedComputePipeline for MipPipelines {
 }
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, RenderLabel)]
-pub struct MipNode;
+pub struct MipPrepass;
 
-impl render_graph::Node for MipNode {
+impl render_graph::Node for MipPrepass {
     fn run<'w>(
         &self,
         _graph: &mut RenderGraphContext,
