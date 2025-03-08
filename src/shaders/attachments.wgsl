@@ -37,6 +37,9 @@ fn sample_height(tile: AtlasTile) -> f32 {
 
 fn sample_height_mask(tile: AtlasTile) -> bool {
     let attachment = attachments.height;
+
+    if (attachment.mask == 0) { return false; }
+
     let uv         = tile.coordinate.uv * attachment.scale + attachment.offset;
     let raw_height = textureGather(0, height_attachment, terrain_sampler, uv, tile.index);
     let mask       = bitcast<vec4<u32>>(raw_height) & vec4<u32>(1);

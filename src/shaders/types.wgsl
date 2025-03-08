@@ -116,6 +116,10 @@ struct AttachmentConfig {
     center_size: f32,
     scale: f32,
     offset: f32,
+    mask: u32,
+    paddinga: u32,
+    paddingb: u32,
+    paddingc: u32,
 }
 
 

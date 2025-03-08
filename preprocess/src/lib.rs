@@ -63,7 +63,7 @@ fn preprocess_gen<T: Copy + GdalType + PartialEq + NumCast>(
 
     delete_directory(&context.temp_dir);
 
-    save_terrain_config(tiles, &context);
+    save_terrain_config(tiles, context);
 
     println!("Preprocessing took: {:?}", start_preprocessing.elapsed());
 }

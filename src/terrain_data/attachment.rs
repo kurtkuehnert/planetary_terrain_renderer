@@ -3,8 +3,7 @@ use bevy::render::render_resource::TextureFormat;
 use bytemuck::cast_slice;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use std::{fmt::Error, str::FromStr};
+use std::{fmt::Error, path::PathBuf, str::FromStr};
 use strum_macros::EnumIter;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Hash, Default)]
@@ -107,6 +106,7 @@ pub struct AttachmentConfig {
     /// The overlapping border size around the tile, used to prevent sampling artifacts.
     pub border_size: u32,
     pub mip_level_count: u32,
+    pub mask: bool,
     /// The format of the attachment.
     pub format: AttachmentFormat,
 }
@@ -117,6 +117,7 @@ impl Default for AttachmentConfig {
             texture_size: 512,
             border_size: 2,
             mip_level_count: 2,
+            mask: false,
             format: AttachmentFormat::R16U,
         }
     }
@@ -195,6 +196,7 @@ pub struct Attachment {
     pub(crate) border_size: u32,
     pub(crate) mip_level_count: u32,
     pub(crate) format: AttachmentFormat,
+    pub(crate) mask: bool,
 }
 
 impl Attachment {
@@ -213,6 +215,7 @@ impl Attachment {
             border_size: config.border_size,
             mip_level_count: config.mip_level_count,
             format: config.format,
+            mask: config.mask,
         }
     }
 }

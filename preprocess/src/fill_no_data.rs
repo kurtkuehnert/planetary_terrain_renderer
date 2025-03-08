@@ -1,13 +1,11 @@
-use crate::dataset::update_tile_dataset;
 use crate::{
-    dataset::PreprocessContext,
-    gdal_extension::{fill_no_data, CountingProgressCallback, ProgressCallback},
+    dataset::{PreprocessContext, update_tile_dataset},
+    gdal_extension::{CountingProgressCallback, ProgressCallback, fill_no_data},
     result::{PreprocessError, PreprocessResult},
 };
 use bevy_terrain::math::TileCoordinate;
-use gdal::raster::Buffer;
-use gdal::raster::{GdalDataType, GdalType};
-use itertools::{izip, Itertools};
+use gdal::raster::{Buffer, GdalDataType, GdalType};
+use itertools::{Itertools, izip};
 use rayon::prelude::*;
 
 trait BitMask {
@@ -85,7 +83,7 @@ fn create_mask_and_fill_no_data_gen<T: GdalType + BitMask>(
     })
 }
 
-fn only_fill_no_data_gen<T: GdalType>(
+fn only_fill_no_data_gen(
     tiles: &[TileCoordinate],
     context: &PreprocessContext,
     progress_callback: Option<&ProgressCallback>,
@@ -114,12 +112,6 @@ pub fn create_mask_and_fill_no_data(
         };
     }
 
-    macro_rules! only_fill_no_data_gen {
-        ($data_type:ty) => {
-            only_fill_no_data_gen::<$data_type>(tiles, context, progress_callback)
-        };
-    }
-
     if context.create_mask {
         match context.data_type {
             GdalDataType::Unknown => Err(PreprocessError::UnknownRasterbandDataType),
@@ -133,20 +125,10 @@ pub fn create_mask_and_fill_no_data(
             GdalDataType::Int64 => panic!("This is not supported."),
             GdalDataType::Float32 => create_mask_and_fill_no_data_gen!(f32),
             GdalDataType::Float64 => panic!("This is not supported."),
-        }
-    } else {
-        match context.data_type {
-            GdalDataType::Unknown => Err(PreprocessError::UnknownRasterbandDataType),
-            GdalDataType::UInt8 => only_fill_no_data_gen!(u8),
-            GdalDataType::UInt16 => only_fill_no_data_gen!(u16),
-            GdalDataType::UInt32 => only_fill_no_data_gen!(u32),
-            GdalDataType::UInt64 => only_fill_no_data_gen!(u64),
-            GdalDataType::Int8 => only_fill_no_data_gen!(i8),
-            GdalDataType::Int16 => only_fill_no_data_gen!(i16),
-            GdalDataType::Int32 => only_fill_no_data_gen!(i32),
-            GdalDataType::Int64 => only_fill_no_data_gen!(i64),
-            GdalDataType::Float32 => only_fill_no_data_gen!(f32),
-            GdalDataType::Float64 => only_fill_no_data_gen!(f64),
-        }
-    }
+        }?
+    } else if context.fill_radius > 0.0 {
+        only_fill_no_data_gen(tiles, context, progress_callback)?
+    };
+
+    Ok(())
 }

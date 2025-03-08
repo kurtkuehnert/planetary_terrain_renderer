@@ -109,6 +109,7 @@ impl PreprocessContext {
                 texture_size,
                 border_size,
                 mip_level_count,
+                mask: create_mask,
                 format,
             },
             src_path,
@@ -132,8 +133,8 @@ impl PreprocessContext {
         no_data: PreprocessNoData,
         data_type: PreprocessDataType,
         fill_radius: f32,
-        overwrite: bool,
         create_mask: bool,
+        overwrite: bool,
     ) -> PreprocessResult<(Dataset, Self)> {
         let mut src_datasets = src_path
             .iter()

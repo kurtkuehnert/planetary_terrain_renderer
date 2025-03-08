@@ -10,13 +10,13 @@ fn main() {
         overwrite: true,
         no_data: PreprocessNoData::Source,
         data_type: PreprocessDataType::DataType(GdalDataType::Float32),
-        fill_radius: 16.0,
-        create_mask: true,
+        fill_radius: 0.0,
+        create_mask: false,
         lod_count: None,
         attachment_label: AttachmentLabel::Height,
         texture_size: 512,
-        border_size: 2,
-        mip_level_count: 1,
+        border_size: 4,
+        mip_level_count: 4,
         format: AttachmentFormat::R32F,
     };
 
@@ -31,13 +31,13 @@ fn main() {
         overwrite: true,
         no_data: PreprocessNoData::NoData(0.0),
         data_type: PreprocessDataType::DataType(GdalDataType::UInt8),
-        fill_radius: 16.0,
+        fill_radius: 0.0,
         create_mask: false,
         lod_count: Some(4),
         attachment_label: AttachmentLabel::Custom("albedo".to_string()),
         texture_size: 512,
         border_size: 2,
-        mip_level_count: 1,
+        mip_level_count: 4,
         format: AttachmentFormat::Rgb8U,
     };
 

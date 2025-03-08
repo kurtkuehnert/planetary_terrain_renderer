@@ -56,6 +56,7 @@ pub(crate) struct AttachmentMeta {
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct AtlasBufferInfo {
+    pub(crate) mask: bool,
     lod_count: u32,
     pub(crate) texture_size: u32,
     pub(crate) border_size: u32,
@@ -105,6 +106,7 @@ impl AtlasBufferInfo {
         let workgroup_count = UVec3::new(entries_per_side / 8, texture_size / 8, 1);
 
         Self {
+            mask: attachment.mask,
             lod_count,
             border_size,
             center_size,

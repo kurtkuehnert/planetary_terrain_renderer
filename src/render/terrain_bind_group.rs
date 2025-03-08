@@ -54,6 +54,10 @@ struct AttachmentConfig {
     center_size: f32,
     scale: f32,
     offset: f32,
+    mask: u32,
+    padding1: u32,
+    padding2: u32,
+    padding3: u32,
 }
 
 impl AttachmentConfig {
@@ -65,6 +69,10 @@ impl AttachmentConfig {
                 / attachment.buffer_info.texture_size as f32,
             offset: attachment.buffer_info.border_size as f32
                 / attachment.buffer_info.texture_size as f32,
+            mask: attachment.buffer_info.mask as u32,
+            padding1: 0,
+            padding2: 0,
+            padding3: 0,
         }
     }
 }
