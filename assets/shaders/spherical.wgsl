@@ -30,10 +30,11 @@ fn sample_albedo(tile: AtlasTile) -> vec4<f32> {
 fn color_earth(tile: AtlasTile) -> vec4<f32> {
    let height = sample_height(tile);
 
-    if (height < 0.0) {
+    if (height < 0.0) {  
         return textureSampleLevel(gradient, gradient_sampler, vec2<f32>(mix(0.0, 0.075, pow(height / terrain.min_height, 0.25)), 0.5), 0.0);
     } else {
-        return textureSampleLevel(gradient, gradient_sampler, vec2<f32>(mix(0.09, 0.6, pow(height / terrain.max_height * 1.4, 1.0)), 0.5), 0.0);
+        return sample_albedo(tile);
+//        return textureSampleLevel(gradient, gradient_sampler, vec2<f32>(mix(0.09, 0.6, pow(height / terrain.max_height * 1.4, 1.0)), 0.5), 0.0);
     }
 }
 
@@ -49,6 +50,12 @@ fn sample_color(tile: AtlasTile) -> vec4<f32> {
         case 0u: { color = color_dataset(tile); }
         case 1u: { color = color_earth(tile);   }
         case 2u: { color = sample_albedo(tile); }
+        case 3u: {
+            color = sample_albedo(tile);
+            if (color.a == 0) {
+                color = vec4<f32>(0.5);
+            }
+        }
         case default: {}
     }
 

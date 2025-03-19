@@ -37,7 +37,7 @@ fn frustum_cull_aabb(coordinate: Coordinate) -> bool {
     for (var i = 0u; i < 4; i = i + 1) {
         let corner_uv               = vec2<f32>(f32(i & 1u), f32(i >> 1u & 1u));
         let corner_coordinate       = Coordinate(coordinate.face, coordinate.lod, coordinate.xy, corner_uv);
-        let corner_world_coordinate = compute_world_coordinate(corner_coordinate, approximate_height);
+        let corner_world_coordinate = compute_world_coordinate(corner_coordinate);
         let corner_low              = apply_height(corner_world_coordinate, terrain.min_height);
         let corner_high             = apply_height(corner_world_coordinate, terrain.max_height);
 
@@ -57,14 +57,14 @@ fn frustum_cull_aabb(coordinate: Coordinate) -> bool {
 
 fn frustum_cull_sphere(coordinate: Coordinate) -> bool {
     let center_coordinate = Coordinate(coordinate.face, coordinate.lod, coordinate.xy, vec2<f32>(0.5));
-    let center_position   = compute_world_coordinate(center_coordinate, approximate_height).position;
+    let center_position   = compute_world_coordinate(center_coordinate).position;
 
     var radius = 0.0;
 
     for (var i = 0u; i < 4; i = i + 1) {
         let corner_uv               = vec2<f32>(f32(i & 1u), f32(i >> 1u & 1u));
         let corner_coordinate       = Coordinate(coordinate.face, coordinate.lod, coordinate.xy, corner_uv);
-        let corner_world_coordinate = compute_world_coordinate(corner_coordinate, approximate_height);
+        let corner_world_coordinate = compute_world_coordinate(corner_coordinate);
         let corner_low              = apply_height(corner_world_coordinate, terrain.min_height);
         let corner_high             = apply_height(corner_world_coordinate, terrain.max_height);
 
@@ -113,16 +113,16 @@ fn horizon_cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bo
 }
 
 fn no_data_cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bool {
-    var blend      = compute_blend(world_coordinate.view_distance);
-    blend.lod      = min(coordinate.lod, blend.lod);
-    let atlas_tile = lookup_tile(coordinate, blend);
+    var blend = compute_blend(world_coordinate.view_distance);
+    blend.lod = min(coordinate.lod, blend.lod);
+    let tile  = lookup_tile(coordinate, blend);
 
-    return atlas_tile.index == 4294967295;
+    return tile.index == 4294967295;
 }
 
 fn cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bool {
 //    if (frustum_cull_aabb(coordinate)) { return true; }
-    if (frustum_cull_sphere(coordinate)) { return true; }
+//    if (frustum_cull_sphere(coordinate)) { return true; }
     if (horizon_cull(coordinate, world_coordinate)) { return true; }
     if (no_data_cull(coordinate, world_coordinate)) { return true; }
 
@@ -136,7 +136,7 @@ fn prepare_tile(tile: TileCoordinate) -> GeometryTile {
     for (var i = 0u; i < 4; i = i + 1) {
         let corner_uv               = vec2<f32>(f32(i & 1u), f32(i >> 1u & 1u));
         let corner_coordinate       = Coordinate(tile.face, tile.lod, tile.xy, corner_uv);
-        let corner_world_coordinate = compute_world_coordinate(corner_coordinate, approximate_height);
+        let corner_world_coordinate = compute_world_coordinate(corner_coordinate);
 
         distances[i] = corner_world_coordinate.view_distance;
         ratios[i]    = compute_morph(corner_coordinate.lod, corner_world_coordinate.view_distance);
@@ -154,7 +154,7 @@ fn refine_tiles(@builtin(global_invocation_id) invocation_id: vec3<u32>) {
 
     let tile             = temporary_tiles[parent_index(invocation_id.x)];
     let coordinate       = compute_subdivision_coordinate(tile);
-    let world_coordinate = compute_world_coordinate(coordinate, approximate_height);
+    let world_coordinate = compute_world_coordinate(coordinate);
 
     if cull(coordinate, world_coordinate) { return; }
 

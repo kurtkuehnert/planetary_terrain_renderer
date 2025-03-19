@@ -43,11 +43,11 @@ fn compute_coordinate(tile_index: u32, tile_uv: vec2<f32>) -> Coordinate {
 
 
 #ifdef PREPASS
-fn compute_world_coordinate(coordinate: Coordinate, height: f32) -> WorldCoordinate {
-    var world_coordinate = compute_world_coordinate_imprecise(coordinate, height);
+fn compute_world_coordinate(coordinate: Coordinate) -> WorldCoordinate {
+    var world_coordinate = compute_world_coordinate_imprecise(coordinate, approximate_height);
 
     if (high_precision(world_coordinate.view_distance)) {
-        world_coordinate = compute_world_coordinate_precise(coordinate, height);
+        world_coordinate = compute_world_coordinate_precise(coordinate, approximate_height);
     }
 
     return world_coordinate;
@@ -55,13 +55,13 @@ fn compute_world_coordinate(coordinate: Coordinate, height: f32) -> WorldCoordin
 #endif
 
 #ifdef VERTEX
-fn compute_world_coordinate(coordinate: Coordinate, height: f32, tile_index: u32, tile_uv: vec2<f32>) -> WorldCoordinate {
+fn compute_world_coordinate(coordinate: Coordinate, tile_index: u32, tile_uv: vec2<f32>) -> WorldCoordinate {
     let tile          = geometry_tiles[tile_index];
     let view_distance = mix(mix(tile.view_distances.x, tile.view_distances.y, tile_uv.x),
                             mix(tile.view_distances.z, tile.view_distances.w, tile_uv.x), tile_uv.y);
 
-    if (high_precision(view_distance)) { return compute_world_coordinate_precise(coordinate, height); }
-    else {                               return compute_world_coordinate_imprecise(coordinate, height); }
+    if (high_precision(view_distance)) { return compute_world_coordinate_precise(coordinate, approximate_height); }
+    else {                               return compute_world_coordinate_imprecise(coordinate, approximate_height); }
 }
 #endif
 

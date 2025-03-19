@@ -1,7 +1,7 @@
 #define_import_path bevy_terrain::vertex
 
 #import bevy_terrain::types::{Blend, Coordinate, WorldCoordinate}
-#import bevy_terrain::bindings::{terrain_view, approximate_height}
+#import bevy_terrain::bindings::terrain_view
 #import bevy_terrain::functions::{compute_coordinate, compute_world_coordinate, compute_blend, lookup_tile, apply_height}
 #import bevy_terrain::attachments::sample_height
 #import bevy_pbr::mesh_view_bindings::view
@@ -30,7 +30,7 @@ fn vertex_info(input: VertexInput) -> VertexInfo {
     var info: VertexInfo;
     info.tile_index       = input.vertex_index / terrain_view.vertices_per_tile;
     info.coordinate       = compute_coordinate(input.vertex_index);
-    info.world_coordinate = compute_world_coordinate(info.coordinate, approximate_height, info.tile_index, info.coordinate.uv);
+    info.world_coordinate = compute_world_coordinate(info.coordinate, info.tile_index, info.coordinate.uv);
     info.blend            = compute_blend(info.world_coordinate.view_distance);
     return info;
 }

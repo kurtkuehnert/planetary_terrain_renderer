@@ -1,7 +1,11 @@
-use crate::cli::Cli;
-use crate::result::{PreprocessError, PreprocessResult};
-use bevy_terrain::math::TileCoordinate;
-use bevy_terrain::terrain_data::{AttachmentConfig, AttachmentLabel};
+use crate::{
+    cli::Cli,
+    result::{PreprocessError, PreprocessResult},
+};
+use bevy_terrain::{
+    math::TileCoordinate,
+    terrain_data::{AttachmentConfig, AttachmentLabel},
+};
 use gdal::{
     Dataset, DatasetOptions, DriverManager, GdalOpenFlags, GeoTransform,
     programs::raster::build_vrt,
@@ -11,7 +15,6 @@ use glam::{IVec2, U64Vec2};
 use itertools::Itertools;
 use std::{
     fs,
-    ops::Not,
     path::{Path, PathBuf},
     process::Command,
     str::FromStr,
@@ -121,6 +124,8 @@ impl PreprocessContext {
             overwrite,
         )
     }
+
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn initialize(
         terrain_path: PathBuf,
         lod_count: Option<u32>,
@@ -324,12 +329,12 @@ pub fn clear_directory(directory: &Path) {
 pub fn iter_directory(directory: &Path) -> impl Iterator<Item = PathBuf> {
     fs::read_dir(directory).unwrap().filter_map(|entry| {
         let path = entry.unwrap().path();
+        let name = path.file_name().unwrap().to_string_lossy();
 
-        path.file_name()
-            .unwrap()
-            .to_string_lossy()
-            .starts_with("._")
-            .not()
-            .then_some(path)
+        if !name.starts_with("._") && !name.ends_with(".aux.xml") {
+            Some(path)
+        } else {
+            None
+        }
     })
 }

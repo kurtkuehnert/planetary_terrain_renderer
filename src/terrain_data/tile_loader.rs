@@ -44,6 +44,8 @@ impl DefaultLoader {
                 atlas.tile_loaded(tile.tile.clone(), data);
 
                 false
+            } else if asset_server.load_state(tile.handle.id()).is_failed() {
+                return false;
             } else {
                 true
             }

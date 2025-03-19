@@ -21,7 +21,7 @@ fn prepare_root() {
 
     // compute approximate height
     let coordinate       = compute_view_coordinate(terrain_view.face, terrain_view.lod);
-    let world_coordinate = compute_world_coordinate(coordinate, approximate_height);
+    let world_coordinate = compute_world_coordinate(coordinate);
     let blend            = compute_blend(world_coordinate.view_distance);
 
     let tile = lookup_tile(coordinate, blend);
