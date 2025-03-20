@@ -24,6 +24,8 @@ impl Material for CustomMaterial {
 }
 
 fn main() {
+    std::thread::sleep(std::time::Duration::from_secs(1));
+
     App::new()
         .add_plugins((
             DefaultPlugins,
@@ -80,57 +82,57 @@ fn initialize(
         view,
     );
 
-    commands.spawn_terrain(
-        asset_server.load("terrains/los/config.tc.ron"),
-        TerrainViewConfig {
-            order: 1,
-            ..default()
-        },
-        CustomMaterial {
-            gradient: gradient2.clone(),
-            gradient_info: GradientInfo { mode: 0 },
-        },
-        view,
-    );
-
-    commands.spawn_terrain(
-        asset_server.load("terrains/npd/config.tc.ron"),
-        TerrainViewConfig {
-            order: 2,
-            ..default()
-        },
-        CustomMaterial {
-            gradient: gradient2.clone(),
-            gradient_info: GradientInfo { mode: 0 },
-        },
-        view,
-    );
-
-    commands.spawn_terrain(
-        asset_server.load("terrains/utsira/config.tc.ron"),
-        TerrainViewConfig {
-            order: 1,
-            ..default()
-        },
-        CustomMaterial {
-            gradient: gradient2.clone(),
-            gradient_info: GradientInfo { mode: 0 },
-        },
-        view,
-    );
-
-    commands.spawn_terrain(
-        asset_server.load("terrains/sas/config.tc.ron"),
-        TerrainViewConfig {
-            order: 2,
-            ..default()
-        },
-        CustomMaterial {
-            gradient: gradient2.clone(),
-            gradient_info: GradientInfo { mode: 3 },
-        },
-        view,
-    );
+    // commands.spawn_terrain(
+    //     asset_server.load("terrains/los/config.tc.ron"),
+    //     TerrainViewConfig {
+    //         order: 1,
+    //         ..default()
+    //     },
+    //     CustomMaterial {
+    //         gradient: gradient2.clone(),
+    //         gradient_info: GradientInfo { mode: 0 },
+    //     },
+    //     view,
+    // );
+    //
+    // commands.spawn_terrain(
+    //     asset_server.load("terrains/npd/config.tc.ron"),
+    //     TerrainViewConfig {
+    //         order: 2,
+    //         ..default()
+    //     },
+    //     CustomMaterial {
+    //         gradient: gradient2.clone(),
+    //         gradient_info: GradientInfo { mode: 0 },
+    //     },
+    //     view,
+    // );
+    //
+    // commands.spawn_terrain(
+    //     asset_server.load("terrains/utsira/config.tc.ron"),
+    //     TerrainViewConfig {
+    //         order: 1,
+    //         ..default()
+    //     },
+    //     CustomMaterial {
+    //         gradient: gradient2.clone(),
+    //         gradient_info: GradientInfo { mode: 0 },
+    //     },
+    //     view,
+    // );
+    //
+    // commands.spawn_terrain(
+    //     asset_server.load("terrains/sas/config.tc.ron"),
+    //     TerrainViewConfig {
+    //         order: 2,
+    //         ..default()
+    //     },
+    //     CustomMaterial {
+    //         gradient: gradient2.clone(),
+    //         gradient_info: GradientInfo { mode: 3 },
+    //     },
+    //     view,
+    // );
 
     //
     // commands.spawn_terrain(

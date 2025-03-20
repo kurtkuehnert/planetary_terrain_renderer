@@ -15,7 +15,7 @@
 @group(0) @binding(2) var child_texture: texture_storage_2d_array<r32float, write>;
 #endif
 
-@compute @workgroup_size(8, 8, 1)
+@compute @workgroup_size(8, 8)
 fn main(@builtin(global_invocation_id) invocation_id: vec3<u32>) {
     let coord = invocation_id.xy;
 

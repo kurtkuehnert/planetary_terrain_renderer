@@ -1,18 +1,20 @@
 #import bevy_terrain::types::{TileCoordinate, GeometryTile, Coordinate, WorldCoordinate, Blend}
-#import bevy_terrain::bindings::{terrain, terrain_view, final_tiles, approximate_height, temporary_tiles, state}
-#import bevy_terrain::functions::{compute_subdivision_coordinate, compute_world_coordinate, compute_morph, compute_blend, lookup_tile, apply_height}
+#import bevy_terrain::bindings::{terrain, terrain_view, final_tiles, approximate_height, temporary_tiles, state, indirect_buffer}
+#import bevy_terrain::functions::{compute_subdivision_coordinate, compute_world_coordinate, compute_view_coordinate, compute_morph, compute_blend, lookup_tile, apply_height}
+#import bevy_terrain::attachments::{sample_height, sample_height_mask}
 #import bevy_render::maths::affine3_to_square
 
-fn child_index() -> i32 {
-    return atomicAdd(&state.child_index, state.counter);
+fn child_index() -> u32 {
+//    return atomicAdd(&state.child_index, state.counter);
+    return atomicAdd(&state.child_index, 1u) % terrain_view.geometry_tile_count;
 }
 
-fn parent_index(id: u32) -> i32 {
-    return i32(terrain_view.geometry_tile_count - 1u) * clamp(state.counter, 0, 1) - i32(id) * state.counter;
-}
+//fn parent_index(id: u32) -> i32 {
+//    return i32(terrain_view.geometry_tile_count - 1u) * clamp(state.counter, 0, 1) - i32(id) * state.counter;
+//}
 
-fn final_index() -> i32 {
-    return atomicAdd(&state.final_index, 1);
+fn final_index() -> u32 {
+    return atomicAdd(&state.final_index, 1u);
 }
 
 fn should_be_divided(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bool {
@@ -122,7 +124,7 @@ fn no_data_cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bo
 
 fn cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bool {
 //    if (frustum_cull_aabb(coordinate)) { return true; }
-//    if (frustum_cull_sphere(coordinate)) { return true; }
+    if (frustum_cull_sphere(coordinate)) { return true; }
     if (horizon_cull(coordinate, world_coordinate)) { return true; }
     if (no_data_cull(coordinate, world_coordinate)) { return true; }
 
@@ -148,19 +150,69 @@ fn prepare_tile(tile: TileCoordinate) -> GeometryTile {
     return GeometryTile(tile.face, tile.lod, tile.xy, view_distances, morph_ratios);
 }
 
-@compute @workgroup_size(64, 1, 1)
-fn refine_tiles(@builtin(global_invocation_id) invocation_id: vec3<u32>) {
-    if (invocation_id.x >= state.tile_count) { return; }
+@compute @workgroup_size(1)
+fn prepare_root() {
+#ifdef SPHERICAL
+    // Todo: consider culling the entire back face (opposite of viewer)
+    for (var i: u32 = 0u; i < 6u; i = i + 1u) { temporary_tiles[i] = TileCoordinate(i, 0u, vec2<u32>(0u)); }
+    atomicStore(&state.child_index, 6u);
+#else
+    temporary_tiles[0] = TileCoordinate(0u, 0u, vec2<u32>(0u));
+    atomicStore(&state.child_index, 1u);
+#endif
 
-    let tile             = temporary_tiles[parent_index(invocation_id.x)];
-    let coordinate       = compute_subdivision_coordinate(tile);
+    atomicStore(&state.final_index, 0u);
+    atomicStore(&state.parent_index, 0u);
+
+    // compute approximate height
+    let coordinate       = compute_view_coordinate(terrain_view.face, terrain_view.lod);
     let world_coordinate = compute_world_coordinate(coordinate);
+    let blend            = compute_blend(world_coordinate.view_distance);
 
-    if cull(coordinate, world_coordinate) { return; }
+    let tile = lookup_tile(coordinate, blend);
+    if (!sample_height_mask(tile)) { approximate_height = sample_height(tile); }
 
-    if (should_be_divided(coordinate, world_coordinate)) {
-        subdivide(tile);
-    } else {
-        final_tiles[final_index()] = prepare_tile(tile);
+    // Todo: this does not work
+    // let distance = dot(normalize(apply_height(world_coordinate, approximate_height) - terrain_view.world_position), world_coordinate.normal);
+    // if (distance > 0.0) { state.tile_count   = 0u; }
+}
+
+@compute @workgroup_size(256)
+fn refine_tiles(@builtin(global_invocation_id) invocation_id: vec3<u32>) {
+//    let thread_id = invocation_id.x; // Todo: use thread_id to use less atomic operations?
+
+    loop {
+        workgroupBarrier();
+        let current_parent = atomicLoad(&state.parent_index);
+        let current_child  = atomicLoad(&state.child_index);
+        workgroupBarrier();
+
+        if current_child - current_parent > terrain_view.geometry_tile_count { break; } // geometry tile buffer too small
+        if current_parent == current_child { break; }// has to be true if there is still any work left
+
+        let tile_index = atomicAdd(&state.parent_index, 1u); // every thread gets a unique tile_index
+
+        if tile_index >= current_child {
+            atomicSub(&state.parent_index, 1u); // Undo the invalid increment
+            continue;                           // Wait if no work is available
+        }
+
+        let tile             = temporary_tiles[tile_index % terrain_view.geometry_tile_count];
+        let coordinate       = compute_subdivision_coordinate(tile);
+        let world_coordinate = compute_world_coordinate(coordinate);
+
+        if cull(coordinate, world_coordinate) { continue; }
+
+        if (should_be_divided(coordinate, world_coordinate)) {
+            subdivide(tile);
+        } else {
+            final_tiles[final_index()] = prepare_tile(tile);
+        }
     }
+}
+
+@compute @workgroup_size(1)
+fn prepare_render() {
+    indirect_buffer.vertex_count   = terrain_view.vertices_per_tile * atomicLoad(&state.final_index);
+    indirect_buffer.instance_count = 1u;
 }

@@ -48,6 +48,12 @@ my [thesis](https://github.com/kurtkuehnert/terrain_renderer/blob/main/Thesis.pd
 There I present the basics of terrain rendering (chapter 2), common approaches (chapter 3) and a detailed explanation of
 method used by `bevy_terrain` (chapter 4).
 
+## Debug with  XCode
+
+Set the environment variable CARGO_MANIFEST_DIR to your bevy_terrain directory, when using the XCode Shader Debugger.
+
+`CARGO_MANIFEST_DIR = /Users/kurt/Code/bevy_terrain`
+
 ## Debug Controls
 
 These are the debug controls of the plugin.

@@ -73,9 +73,10 @@ struct ViewCoordinate {
 
 struct PrepassState {
     tile_count: u32,
-    counter: i32,
-    child_index: atomic<i32>,
-    final_index: atomic<i32>,
+//    counter: i32,
+    parent_index: atomic<u32>,
+    child_index: atomic<u32>,
+    final_index: atomic<u32>,
 }
 
 struct Blend {
@@ -124,7 +125,10 @@ struct AttachmentConfig {
 
 
 struct IndirectBuffer {
-    workgroup_count: vec3<u32>,
+    vertex_count: u32,
+    instance_count: u32,
+    first_vertex: u32,
+    first_instance: u32,
 }
 
 struct TangentSpace {
