@@ -147,13 +147,11 @@ impl GpuTerrain {
         tile_atlas: &TileAtlas,
         gpu_tile_atlas: &GpuTileAtlas,
     ) -> Self {
-        let atlas_sampler = device.create_sampler(&SamplerDescriptor {
-            mag_filter: FilterMode::Linear,
-            min_filter: FilterMode::Linear,
-            mipmap_filter: FilterMode::Linear,
-            anisotropy_clamp: 16, // Todo: make this customisable
-            ..default()
-        });
+        let attachment_buffer = GpuBuffer::create(
+            device,
+            &AttachmentUniform::new(gpu_tile_atlas),
+            BufferUsages::UNIFORM,
+        );
 
         let attachment_textures = array::from_fn(|i| {
             gpu_tile_atlas
@@ -162,15 +160,24 @@ impl GpuTerrain {
                 .find(|(_, attachment)| attachment.index == i)
                 .map_or(
                     fallback_image.d2_array.texture_view.clone(),
-                    |(_, attachment)| attachment.atlas_texture.create_view(&default()),
+                    |(_, attachment)| {
+                        attachment
+                            .atlas_texture
+                            .create_view(&TextureViewDescriptor {
+                                format: Some(attachment.buffer_info.format.render_format()),
+                                ..default()
+                            })
+                    },
                 )
         });
 
-        let attachment_buffer = GpuBuffer::create(
-            device,
-            &AttachmentUniform::new(gpu_tile_atlas),
-            BufferUsages::UNIFORM,
-        );
+        let atlas_sampler = device.create_sampler(&SamplerDescriptor {
+            mag_filter: FilterMode::Linear,
+            min_filter: FilterMode::Linear,
+            mipmap_filter: FilterMode::Linear,
+            anisotropy_clamp: 16, // Todo: make this customisable
+            ..default()
+        });
 
         Self {
             terrain_buffer: tile_atlas.terrain_buffer.clone(),

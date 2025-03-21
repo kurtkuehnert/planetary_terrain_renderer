@@ -1,5 +1,5 @@
 use bevy::{
-    asset::{io::Reader, AssetLoader, LoadContext},
+    asset::{AssetLoader, LoadContext, io::Reader},
     image::ImageLoaderError,
     prelude::*,
     render::{
@@ -51,7 +51,7 @@ impl AssetLoader for TiffLoader {
             },
             TextureDimension::D2,
             data,
-            TextureFormat::R16Unorm,
+            TextureFormat::bevy_default(),
             RenderAssetUsages::MAIN_WORLD,
         ))
     }

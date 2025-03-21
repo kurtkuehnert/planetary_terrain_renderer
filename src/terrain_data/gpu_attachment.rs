@@ -226,18 +226,15 @@ impl GpuAttachment {
             mip_level_count: attachment.mip_level_count,
             sample_count: 1,
             dimension: TextureDimension::D2,
-            format: buffer_info.format.render_format(),
+            format: buffer_info.format.processing_format(),
             usage: TextureUsages::COPY_DST
                 | TextureUsages::COPY_SRC
                 | TextureUsages::TEXTURE_BINDING
                 | TextureUsages::STORAGE_BINDING,
-            view_formats: &[buffer_info.format.processing_format()],
+            view_formats: &[buffer_info.format.render_format()],
         });
 
-        let atlas_view = atlas_texture.create_view(&TextureViewDescriptor {
-            format: Some(buffer_info.format.processing_format()),
-            ..default()
-        });
+        let atlas_view = atlas_texture.create_view(&default());
 
         let atlas_sampler = device.create_sampler(&SamplerDescriptor {
             mag_filter: FilterMode::Linear,
@@ -274,7 +271,6 @@ impl GpuAttachment {
         let mip_views = (0..buffer_info.mip_level_count)
             .map(|mip_level| {
                 atlas_texture.create_view(&TextureViewDescriptor {
-                    format: Some(buffer_info.format.processing_format()),
                     base_mip_level: mip_level,
                     mip_level_count: Some(1),
                     ..default()

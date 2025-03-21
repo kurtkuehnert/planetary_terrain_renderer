@@ -183,10 +183,8 @@ fn refine_tiles(@builtin(global_invocation_id) invocation_id: vec3<u32>) {
 //    let thread_id = invocation_id.x; // Todo: use thread_id to use less atomic operations?
 
     loop {
-        workgroupBarrier();
         let current_parent = atomicLoad(&state.parent_index);
         let current_child  = atomicLoad(&state.child_index);
-        workgroupBarrier();
 
         if current_child - current_parent > terrain_view.geometry_tile_count { break; } // geometry tile buffer too small
         if current_parent == current_child { break; }// has to be true if there is still any work left

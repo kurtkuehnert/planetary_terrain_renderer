@@ -72,9 +72,9 @@ impl AttachmentFormat {
             AttachmentFormat::Rgb8U => TextureFormat::Rgba8UnormSrgb,
             AttachmentFormat::Rgba8U => TextureFormat::Rgba8UnormSrgb,
             AttachmentFormat::R16U => TextureFormat::R16Unorm,
+            AttachmentFormat::R16I => TextureFormat::R16Snorm,
             AttachmentFormat::Rg16U => TextureFormat::Rg16Unorm,
             AttachmentFormat::R32F => TextureFormat::R32Float,
-            AttachmentFormat::R16I => TextureFormat::R16Snorm,
         }
     }
 
@@ -82,6 +82,9 @@ impl AttachmentFormat {
         match self {
             AttachmentFormat::Rgb8U => TextureFormat::Rgba8Unorm,
             AttachmentFormat::Rgba8U => TextureFormat::Rgba8Unorm,
+            AttachmentFormat::R16U => TextureFormat::R16Uint,
+            AttachmentFormat::R16I => TextureFormat::R16Uint,
+            AttachmentFormat::Rg16U => TextureFormat::Rg16Uint,
             _ => self.render_format(),
         }
     }
@@ -91,9 +94,9 @@ impl AttachmentFormat {
             AttachmentFormat::Rgb8U => 4,
             AttachmentFormat::Rgba8U => 4,
             AttachmentFormat::R16U => 2,
+            AttachmentFormat::R16I => 2,
             AttachmentFormat::Rg16U => 4,
             AttachmentFormat::R32F => 4,
-            AttachmentFormat::R16I => 2,
         }
     }
 }
@@ -118,7 +121,7 @@ impl Default for AttachmentConfig {
             border_size: 2,
             mip_level_count: 2,
             mask: false,
-            format: AttachmentFormat::R16U,
+            format: AttachmentFormat::Rgba8U,
         }
     }
 }

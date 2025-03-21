@@ -24,7 +24,7 @@ impl Material for CustomMaterial {
 }
 
 fn main() {
-    std::thread::sleep(std::time::Duration::from_secs(1));
+    // std::thread::sleep(std::time::Duration::from_secs(1));
 
     App::new()
         .add_plugins((
