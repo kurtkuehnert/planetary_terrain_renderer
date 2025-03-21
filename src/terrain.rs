@@ -6,9 +6,11 @@ use crate::{
     terrain_data::{AttachmentConfig, AttachmentLabel},
 };
 use bevy::{
-    ecs::entity::hash_map::EntityHashMap, platform_support::collections::HashMap, prelude::*,
+    asset::ron, ecs::entity::hash_map::EntityHashMap, platform_support::collections::HashMap,
+    prelude::*,
 };
 use serde::{Deserialize, Serialize};
+use std::{fs, path::Path};
 
 /// Resource that stores components that are associated to a terrain entity.
 /// This is used to persist components in the render world.
@@ -50,5 +52,26 @@ impl Default for TerrainConfig {
             tiles: default(),
             attachments: default(),
         }
+    }
+}
+
+impl TerrainConfig {
+    pub fn add_attachment(
+        &mut self,
+        label: AttachmentLabel,
+        attachment: AttachmentConfig,
+    ) -> &mut Self {
+        self.attachments.insert(label, attachment);
+        self
+    }
+
+    pub fn load_file<P: AsRef<Path>>(path: P) -> anyhow::Result<Self> {
+        let encoded = fs::read_to_string(path)?;
+        Ok(ron::from_str(&encoded)?)
+    }
+
+    pub fn save_file<P: AsRef<Path>>(&self, path: P) -> anyhow::Result<()> {
+        let encoded = ron::ser::to_string_pretty(self, default())?;
+        Ok(fs::write(path, encoded)?)
     }
 }
