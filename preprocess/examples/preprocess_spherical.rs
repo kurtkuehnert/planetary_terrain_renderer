@@ -189,22 +189,22 @@ fn main() {
     //     format: AttachmentFormat::RF32,
     // };
 
-    // let args = Cli {
-    //     src_path: vec!["/Volumes/ExternalSSD/swiss_data/swiss_huge.tif".into()],
-    //     terrain_path: "/Volumes/ExternalSSD/tiles/swiss".into(),
-    //     temp_path: None,
-    //     overwrite: true,
-    //     no_data: PreprocessNoData::NoData(10000.0),
-    //     data_type: PreprocessDataType::DataType(GdalDataType::Float32),
-    //     fill_radius: 32.0,
-    //     create_mask: true,
-    //     lod_count: None,
-    //     attachment_label: AttachmentLabel::Height,
-    //     texture_size: 512,
-    //     border_size: 2,
-    //     mip_level_count: 1,
-    //     format: AttachmentFormat::RF32,
-    // };
+    let args = Cli {
+        src_path: vec!["/Volumes/ExternalSSD/swiss_data/swiss_large.tif".into()],
+        terrain_path: "/Volumes/ExternalSSD/tiles/swiss".into(),
+        temp_path: None,
+        overwrite: true,
+        no_data: PreprocessNoData::NoData(10000.0),
+        data_type: PreprocessDataType::DataType(GdalDataType::Float32),
+        fill_radius: 32.0,
+        create_mask: true,
+        lod_count: None,
+        attachment_label: AttachmentLabel::Height,
+        texture_size: 512,
+        border_size: 4,
+        mip_level_count: 4,
+        format: AttachmentFormat::R32F,
+    };
 
     let (src_dataset, mut context) = PreprocessContext::from_cli(args).unwrap();
 

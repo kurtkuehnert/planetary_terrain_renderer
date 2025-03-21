@@ -65,12 +65,12 @@ impl TerrainConfig {
         self
     }
 
-    pub fn load_file<P: AsRef<Path>>(path: P) -> anyhow::Result<Self> {
+    pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let encoded = fs::read_to_string(path)?;
         Ok(ron::from_str(&encoded)?)
     }
 
-    pub fn save_file<P: AsRef<Path>>(&self, path: P) -> anyhow::Result<()> {
+    pub fn save_file<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let encoded = ron::ser::to_string_pretty(self, default())?;
         Ok(fs::write(path, encoded)?)
     }

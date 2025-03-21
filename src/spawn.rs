@@ -101,7 +101,7 @@ pub trait SpawnTerrainCommandsExt<M: Material> {
     );
 }
 
-impl<'w, 's, M: Material> SpawnTerrainCommandsExt<M> for Commands<'w, 's> {
+impl<M: Material> SpawnTerrainCommandsExt<M> for Commands<'_, '_> {
     fn spawn_terrain(
         &mut self,
         config: Handle<TerrainConfig>,

@@ -27,7 +27,6 @@ bytemuck = "1.14"
 ndarray = "0.16.1"
 itertools = "0.14.0"
 bitflags = "2.4"
-anyhow = "1.0"
 serde = "1.0.210"
 async-channel = "2.1"
 derive_more = { version = "2.0.1", features = ["from"] }
@@ -38,19 +37,9 @@ strum_macros = "0.27.1"
 
 
 [[example]]
-name = "minimal"
-path = "examples/minimal.rs"
-
-[[example]]
-name = "planar"
-path = "examples/planar.rs"
-required-features = ["high_precision"]
-
-[[example]]
 name = "spherical"
 path = "examples/spherical.rs"
 required-features = ["high_precision"]
-
 
 [[example]]
 name = "precision_demo"

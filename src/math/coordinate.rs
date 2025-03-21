@@ -1,6 +1,6 @@
 use crate::math::{
-    FaceRotation, TerrainShape, BLOCK_SIZE, FACE_MATRICES, INVERSE_FACE_MATRICES,
-    NEIGHBOURING_FACES, NEIGHBOUR_OFFSETS, SIGMA,
+    BLOCK_SIZE, FACE_MATRICES, FaceRotation, INVERSE_FACE_MATRICES, NEIGHBOUR_OFFSETS,
+    NEIGHBOURING_FACES, SIGMA, TerrainShape,
 };
 use bevy::{
     math::{DVec2, DVec3},
@@ -149,12 +149,7 @@ impl TileCoordinate {
                 let edge_uv = (edge_position.as_dvec2() / scale).clamp(DVec2::ZERO, DVec2::ONE);
                 let edge_coordinate = Coordinate::new(self.face, edge_uv);
                 let edge_index = match edge_position {
-                    IVec2 { x, y }
-                        if x < 0 && y < 0
-                            || x < 0 && y >= tile_count
-                            || x >= tile_count && y < 0
-                            || x >= tile_count && y >= tile_count =>
-                    {
+                    IVec2 { x, y } if (x >= tile_count || x < 0) && (y >= tile_count || y < 0) => {
                         return (Self::INVALID, FaceRotation::Identical); // there is no single neighbour for tiles at the corners
                     }
                     IVec2 { y, .. } if y < 0 => 1,           // up
