@@ -5,13 +5,13 @@ use crate::{
 };
 use bevy::{
     asset::{AssetServer, Handle},
+    platform_support::collections::HashMap,
     prelude::*,
     render::{
         render_graph::{self, NodeRunError, RenderGraphContext, RenderLabel},
         render_resource::{binding_types::*, *},
         renderer::{RenderContext, RenderDevice},
     },
-    utils::HashMap,
 };
 use strum::IntoEnumIterator;
 

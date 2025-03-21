@@ -1,12 +1,11 @@
 use crate::{
-    big_space::GridCell,
     render::{TerrainPass, TerrainViewDepthTexture},
     shaders::PICKING_SHADER,
 };
 use bevy::{
     asset::RenderAssetUsages,
     core_pipeline::core_3d::graph::Core3d,
-    ecs::{component::ComponentId, query::QueryItem, world::DeferredWorld},
+    ecs::{component::HookContext, query::QueryItem, world::DeferredWorld},
     prelude::*,
     render::{
         RenderApp,
@@ -27,13 +26,14 @@ use bevy::{
     },
     window::PrimaryWindow,
 };
+use big_space::prelude::*;
 
 pub fn picking_system(
     mut buffers: ResMut<Assets<ShaderStorageBuffer>>,
     window: Query<&Window, With<PrimaryWindow>>,
     camera: Query<(&Camera, &GlobalTransform, &GridCell, &PickingData)>,
 ) {
-    let Ok(window) = window.get_single() else {
+    let Ok(window) = window.single() else {
         return;
     };
     let Some(position) = window.cursor_position() else {
@@ -68,7 +68,7 @@ pub fn picking_readback(
 
     let ndc_coords = (2.0 * cursor_coords - 1.0).extend(depth);
 
-    let mut picking_data = picking_data.get_mut(trigger.entity()).unwrap();
+    let mut picking_data = picking_data.get_mut(trigger.target()).unwrap();
     picking_data.cursor_coords = cursor_coords;
     picking_data.cell = GridCell::new(cell.x, cell.y, cell.z);
     picking_data.translation = (depth > 0.0).then(|| world_from_clip.project_point3(ndc_coords));
@@ -79,7 +79,7 @@ pub fn picking_readback(
     // dbg!(stencil);
 }
 
-pub fn picking_hook(mut world: DeferredWorld, entity: Entity, _id: ComponentId) {
+pub fn picking_hook(mut world: DeferredWorld, context: HookContext) {
     let mut buffers = world.resource_mut::<Assets<ShaderStorageBuffer>>();
     let mut buffer = ShaderStorageBuffer::with_size(
         GpuPickingData::min_size().get() as usize,
@@ -90,11 +90,11 @@ pub fn picking_hook(mut world: DeferredWorld, entity: Entity, _id: ComponentId) 
 
     world
         .commands()
-        .entity(entity)
+        .entity(context.entity)
         .insert(Readback::buffer(buffer.clone_weak()))
         .observe(picking_readback);
 
-    let mut picking_data = world.get_mut::<PickingData>(entity).unwrap();
+    let mut picking_data = world.get_mut::<PickingData>(context.entity).unwrap();
     picking_data.buffer = buffer;
 }
 

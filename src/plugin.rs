@@ -22,10 +22,10 @@ use bevy::{
         render_graph::{RenderGraph, RenderGraphApp, ViewNodeRunner},
         render_phase::{DrawFunctions, ViewSortedRenderPhases, sort_phase_system},
         render_resource::*,
-        view::{VisibilitySystems, check_visibility},
     },
 };
 use bevy_common_assets::ron::RonAssetPlugin;
+use big_space::prelude::*;
 
 #[derive(Resource)]
 pub struct TerrainSettings {
@@ -64,7 +64,7 @@ pub struct TerrainPlugin;
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
         #[cfg(feature = "high_precision")]
-        app.add_plugins(crate::big_space::BigSpacePlugin::default());
+        app.add_plugins(BigSpacePlugin::default());
 
         app.add_plugins(RonAssetPlugin::<TerrainConfig>::new(&["tc.ron"]))
             .init_asset::<TerrainConfig>()
@@ -75,7 +75,8 @@ impl Plugin for TerrainPlugin {
             .add_systems(
                 PostUpdate,
                 (
-                    check_visibility::<With<TileAtlas>>.in_set(VisibilitySystems::CheckVisibility),
+                    // Todo: enable visibility checking again
+                    // check_visibility::<With<TileAtlas>>.in_set(VisibilitySystems::CheckVisibility),
                     (
                         TileTree::compute_requests,
                         finish_loading,

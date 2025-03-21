@@ -152,17 +152,18 @@ fn prepare_tile(tile: TileCoordinate) -> GeometryTile {
 
 @compute @workgroup_size(1)
 fn prepare_root() {
-#ifdef SPHERICAL
-    // Todo: consider culling the entire back face (opposite of viewer)
-    for (var i: u32 = 0u; i < 6u; i = i + 1u) { temporary_tiles[i] = TileCoordinate(i, 0u, vec2<u32>(0u)); }
-    atomicStore(&state.child_index, 6u);
-#else
-    temporary_tiles[0] = TileCoordinate(0u, 0u, vec2<u32>(0u));
-    atomicStore(&state.child_index, 1u);
-#endif
-
     atomicStore(&state.final_index, 0u);
     atomicStore(&state.parent_index, 0u);
+#ifdef SPHERICAL
+    atomicStore(&state.child_index, 6u);
+    for (var i: u32 = 0u; i < 6u; i = i + 1u) { temporary_tiles[i] = TileCoordinate(i, 0u, vec2<u32>(0u)); }
+#else
+    atomicStore(&state.child_index, 1u);
+    temporary_tiles[0] = TileCoordinate(0u, 0u, vec2<u32>(0u));
+#endif
+
+//    atomicStore(&state.final_index, 6u)
+//    for (var i: u32 = 0u; i < 6u; i = i + 1u) { final_tiles[i] = prepare_tile(TileCoordinate(i, 0u, vec2<u32>(0u))); }
 
     // compute approximate height
     let coordinate       = compute_view_coordinate(terrain_view.face, terrain_view.lod);

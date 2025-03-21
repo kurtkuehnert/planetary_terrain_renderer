@@ -1,5 +1,5 @@
 #[cfg(feature = "high_precision")]
-use crate::big_space::{FloatingOrigin, GridTransform, GridTransformItem, Grids};
+use big_space::{prelude::*, world_query::GridTransformItem};
 
 use bevy::{input::mouse::MouseMotion, math::DVec3, prelude::*};
 
@@ -65,7 +65,7 @@ pub fn debug_camera_controller(
             mut cell,
         },
         mut controller,
-    )) = camera.get_single_mut()
+    )) = camera.single_mut()
     else {
         return;
     };

@@ -1,5 +1,4 @@
 use crate::{
-    big_space::GridCell,
     math::{Coordinate, TerrainShape, TileCoordinate},
     render::{TerrainViewUniform, TileTreeUniform},
     terrain::TerrainConfig,
@@ -17,6 +16,7 @@ use bevy::{
         storage::ShaderStorageBuffer,
     },
 };
+use big_space::prelude::*;
 use itertools::{Itertools, iproduct};
 use ndarray::Array4;
 use std::{cmp::Ordering, iter};
@@ -323,7 +323,7 @@ impl TileTree {
     pub(crate) fn compute_requests(
         camera: Query<&Camera>,
         mut tile_trees: ResMut<TerrainViewComponents<TileTree>>,
-        #[cfg(feature = "high_precision")] grids: crate::big_space::Grids,
+        #[cfg(feature = "high_precision")] grids: Grids,
         #[cfg(feature = "high_precision")] views: Query<(&Transform, &GridCell)>,
         #[cfg(not(feature = "high_precision"))] view_transforms: Query<&Transform>,
     ) {
@@ -398,7 +398,7 @@ impl TileTree {
         terrain_view: Query<&TerrainViewKey>,
         mut tile_trees: ResMut<TerrainViewComponents<TileTree>>,
     ) {
-        let TerrainViewKey(terrain_view) = terrain_view.get(trigger.entity()).unwrap();
+        let TerrainViewKey(terrain_view) = terrain_view.get(trigger.target()).unwrap();
         let tile_tree = tile_trees.get_mut(terrain_view).unwrap();
         tile_tree.approximate_height = trigger.event().to_shader_type();
     }

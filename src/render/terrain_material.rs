@@ -10,16 +10,15 @@ use crate::{
     terrain_data::GpuTileAtlas,
     terrain_view::TerrainViewComponents,
 };
-
+use bevy::pbr::ExtractMeshesSet;
 use bevy::{
     pbr::{
-        MaterialPipeline, MeshPipeline, MeshPipelineViewLayoutKey, PreparedMaterial,
-        RenderMaterialInstances, SetMaterialBindGroup, SetMeshViewBindGroup,
+        MeshPipeline, MeshPipelineViewLayoutKey, RenderMaterialInstances, SetMaterialBindGroup,
+        SetMeshViewBindGroup,
     },
     prelude::*,
     render::{
         Extract, Render, RenderApp, RenderSet,
-        render_asset::{RenderAssetPlugin, RenderAssets, prepare_assets},
         render_phase::{
             AddRenderCommand, DrawFunctions, PhaseItemExtraIndex, SetItemPipeline,
             ViewSortedRenderPhases,
@@ -27,7 +26,7 @@ use bevy::{
         render_resource::*,
         renderer::RenderDevice,
         sync_world::MainEntity,
-        texture::GpuImage,
+        view::RetainedViewEntity,
     },
 };
 use derive_more::derive::From;
@@ -45,53 +44,22 @@ impl<M: Material> Default for TerrainMaterial<M> {
 
 fn extract_terrain_materials<M: Material>(
     mut material_instances: ResMut<RenderMaterialInstances<M>>,
-    query: Extract<Query<(Entity, &ViewVisibility, &TerrainMaterial<M>)>>,
+    terrains: Extract<Query<(Entity, &ViewVisibility, &TerrainMaterial<M>)>>,
 ) {
     material_instances.clear();
 
-    for (entity, view_visibility, material) in &query {
-        if view_visibility.get() {
-            material_instances.insert(entity.into(), material.id());
-        }
+    for (entity, _view_visibility, material) in &terrains {
+        // Todo: fix visibility
+        // if view_visibility.get() {
+
+        material_instances.insert(entity.into(), material.id());
+        // }
     }
 }
 
-pub struct TerrainPipelineKey<M: Material> {
+#[derive(PartialEq, Eq, Clone, Hash)]
+pub struct TerrainPipelineKey {
     pub flags: TerrainPipelineFlags,
-    pub bind_group_data: M::Data,
-}
-
-impl<M: Material> Eq for TerrainPipelineKey<M> where M::Data: PartialEq {}
-
-impl<M: Material> PartialEq for TerrainPipelineKey<M>
-where
-    M::Data: PartialEq,
-{
-    fn eq(&self, other: &Self) -> bool {
-        self.flags == other.flags && self.bind_group_data == other.bind_group_data
-    }
-}
-
-impl<M: Material> Clone for TerrainPipelineKey<M>
-where
-    M::Data: Clone,
-{
-    fn clone(&self) -> Self {
-        Self {
-            flags: self.flags,
-            bind_group_data: self.bind_group_data.clone(),
-        }
-    }
-}
-
-impl<M: Material> Hash for TerrainPipelineKey<M>
-where
-    M::Data: Hash,
-{
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.flags.hash(state);
-        self.bind_group_data.hash(state);
-    }
 }
 
 bitflags::bitflags! {
@@ -301,11 +269,8 @@ impl<M: Material> FromWorld for TerrainRenderPipeline<M> {
     }
 }
 
-impl<M: Material> SpecializedRenderPipeline for TerrainRenderPipeline<M>
-where
-    M::Data: PartialEq + Eq + Hash + Clone,
-{
-    type Key = TerrainPipelineKey<M>;
+impl<M: Material> SpecializedRenderPipeline for TerrainRenderPipeline<M> {
+    type Key = TerrainPipelineKey;
 
     fn specialize(&self, key: Self::Key) -> RenderPipelineDescriptor {
         let mut shader_defs = key.flags.shader_defs();
@@ -399,37 +364,33 @@ pub(crate) type DrawTerrain<M> = (
 pub(crate) fn queue_terrain<M: Material>(
     draw_functions: Res<DrawFunctions<TerrainItem>>,
     debug: Option<Res<DebugTerrain>>,
-    render_materials: Res<RenderAssets<PreparedMaterial<M>>>,
     pipeline_cache: Res<PipelineCache>,
     terrain_pipeline: Res<TerrainRenderPipeline<M>>,
     mut pipelines: ResMut<SpecializedRenderPipelines<TerrainRenderPipeline<M>>>,
     mut terrain_phases: ResMut<ViewSortedRenderPhases<TerrainItem>>,
     gpu_tile_atlases: Res<TerrainComponents<GpuTileAtlas>>,
     gpu_terrain_views: Res<TerrainViewComponents<GpuTerrainView>>,
-    render_material_instances: Res<RenderMaterialInstances<M>>,
-    mut views: Query<(Entity, MainEntity, &Msaa)>,
+    mut views: Query<(MainEntity, &Msaa)>,
 ) where
     M::Data: PartialEq + Eq + Hash + Clone,
 {
     let draw_function = draw_functions.read().get_id::<DrawTerrain<M>>().unwrap();
 
-    for (render_view, view, msaa) in &mut views {
-        let Some(terrain_phase) = terrain_phases.get_mut(&render_view) else {
+    for (view, msaa) in &mut views {
+        let Some(terrain_phase) = terrain_phases.get_mut(&RetainedViewEntity {
+            main_entity: view.into(),
+            auxiliary_entity: Entity::PLACEHOLDER.into(),
+            subview_index: 0,
+        }) else {
             continue;
         };
 
-        for (&terrain, &material_id) in render_material_instances.iter() {
-            let Some(gpu_terrain_view) = gpu_terrain_views.get(&(terrain.id(), view)) else {
-                continue;
-            };
-
-            let Some(material) = render_materials.get(material_id) else {
+        for (&terrain, gpu_tile_atlas) in gpu_tile_atlases.iter() {
+            let Some(gpu_terrain_view) = gpu_terrain_views.get(&(terrain, view)) else {
                 continue;
             };
 
             let mut flags = TerrainPipelineFlags::from_msaa_samples(msaa.samples());
-
-            let gpu_tile_atlas = &gpu_tile_atlases[&terrain.id()];
             if gpu_tile_atlas.is_spherical {
                 flags |= TerrainPipelineFlags::SPHERICAL;
             }
@@ -443,19 +404,16 @@ pub(crate) fn queue_terrain<M: Material>(
                     | TerrainPipelineFlags::SAMPLE_GRAD;
             }
 
-            let key = TerrainPipelineKey {
-                flags,
-                bind_group_data: material.key.clone(),
-            };
+            let key = TerrainPipelineKey { flags };
 
             let pipeline = pipelines.specialize(&pipeline_cache, &terrain_pipeline, key);
 
             terrain_phase.add(TerrainItem {
-                representative_entity: (terrain.id(), terrain), // technically wrong
+                representative_entity: (terrain, terrain.into()), // technically wrong
                 draw_function,
                 pipeline,
                 batch_range: 0..1,
-                extra_index: PhaseItemExtraIndex(0),
+                extra_index: PhaseItemExtraIndex::None,
                 order: gpu_terrain_view.order,
             })
         }
@@ -469,7 +427,7 @@ pub struct TerrainMaterialPlugin<M: Material>(PhantomData<M>);
 
 impl<M: Material> Default for TerrainMaterialPlugin<M> {
     fn default() -> Self {
-        Self(Default::default())
+        Self(default())
     }
 }
 
@@ -478,28 +436,23 @@ where
     M::Data: PartialEq + Eq + Hash + Clone,
 {
     fn build(&self, app: &mut App) {
-        app.init_asset::<M>()
+        app.add_plugins(MaterialPlugin::<M>::default())
             .register_type::<TerrainMaterial<M>>()
-            .add_plugins(RenderAssetPlugin::<PreparedMaterial<M>, GpuImage>::default())
             .insert_resource(TerrainsToSpawn::<M>(vec![]))
             .add_systems(PostUpdate, spawn_terrains::<M>);
 
         app.sub_app_mut(RenderApp)
             .add_render_command::<TerrainItem, DrawTerrain<M>>()
-            .init_resource::<RenderMaterialInstances<M>>()
             .init_resource::<SpecializedRenderPipelines<TerrainRenderPipeline<M>>>()
-            .add_systems(ExtractSchedule, extract_terrain_materials::<M>)
             .add_systems(
-                Render,
-                queue_terrain::<M>
-                    .in_set(RenderSet::QueueMeshes)
-                    .after(prepare_assets::<PreparedMaterial<M>>),
-            );
+                ExtractSchedule,
+                extract_terrain_materials::<M>.after(ExtractMeshesSet),
+            )
+            .add_systems(Render, queue_terrain::<M>.in_set(RenderSet::QueueMeshes));
     }
 
     fn finish(&self, app: &mut App) {
         app.sub_app_mut(RenderApp)
-            .init_resource::<TerrainRenderPipeline<M>>()
-            .init_resource::<MaterialPipeline<M>>(); // prepare assets depends on this to access the material layout
+            .init_resource::<TerrainRenderPipeline<M>>();
     }
 }

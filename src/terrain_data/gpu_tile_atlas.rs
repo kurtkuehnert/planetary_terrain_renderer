@@ -7,6 +7,7 @@ use crate::{
     },
 };
 use bevy::{
+    platform_support::collections::HashMap,
     prelude::*,
     render::{
         Extract, MainWorld,
@@ -14,7 +15,6 @@ use bevy::{
         renderer::{RenderDevice, RenderQueue},
     },
     tasks::{AsyncComputeTaskPool, Task},
-    utils::HashMap,
 };
 use std::{iter, mem};
 
@@ -181,18 +181,18 @@ impl GpuTileAtlas {
             let attachment = &self.attachments[&tile.label];
 
             queue.write_texture(
-                attachment.buffer_info.image_copy_texture(
+                attachment.buffer_info.texture_copy_view(
                     &attachment.atlas_texture,
                     tile.atlas_index,
                     0,
                 ),
                 tile.data.bytes(),
-                ImageDataLayout {
+                TexelCopyBufferLayout {
                     offset: 0,
                     bytes_per_row: Some(attachment.buffer_info.actual_side_size),
                     rows_per_image: Some(attachment.buffer_info.texture_size),
                 },
-                attachment.buffer_info.image_copy_size(0),
+                attachment.buffer_info.extend_3d(0),
             );
         }
     }

@@ -1,5 +1,4 @@
 use crate::{
-    big_space::GridCell,
     math::{TerrainShape, TileCoordinate},
     plugin::TerrainSettings,
     render::TerrainUniform,
@@ -12,11 +11,12 @@ use crate::{
 };
 use bevy::{
     asset::RenderAssetUsages,
+    platform_support::collections::{HashMap, HashSet},
     prelude::*,
     render::{render_resource::*, storage::ShaderStorageBuffer, view::NoFrustumCulling},
     tasks::Task,
-    utils::{HashMap, HashSet},
 };
+use big_space::prelude::*;
 use std::collections::VecDeque;
 
 /// The current state of a tile of a [`TileAtlas`].

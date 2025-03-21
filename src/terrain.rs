@@ -5,8 +5,9 @@ use crate::{
     math::{TerrainShape, TileCoordinate},
     terrain_data::{AttachmentConfig, AttachmentLabel},
 };
-use bevy::{ecs::entity::EntityHashMap, prelude::*, utils::HashMap};
-use ron::error::SpannedResult;
+use bevy::{
+    ecs::entity::hash_map::EntityHashMap, platform_support::collections::HashMap, prelude::*,
+};
 use serde::{Deserialize, Serialize};
 use std::{fs, path::Path};
 
@@ -63,14 +64,13 @@ impl TerrainConfig {
         self
     }
 
-    pub fn load_file<P: AsRef<Path>>(path: P) -> SpannedResult<Self> {
+    pub fn load_file<P: AsRef<Path>>(path: P) -> anyhow::Result<Self> {
         let encoded = fs::read_to_string(path)?;
-        ron::from_str(&encoded)
+        Ok(ron::from_str(&encoded)?)
     }
 
     pub fn save_file<P: AsRef<Path>>(&self, path: P) -> anyhow::Result<()> {
-        let encoded = ron::ser::to_string_pretty(self, ron::ser::PrettyConfig::default())?;
-        fs::write(path, encoded)?;
-        Ok(())
+        let encoded = ron::ser::to_string_pretty(self, default())?;
+        Ok(fs::write(path, encoded)?)
     }
 }

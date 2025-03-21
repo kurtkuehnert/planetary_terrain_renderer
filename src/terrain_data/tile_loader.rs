@@ -40,7 +40,7 @@ impl DefaultLoader {
         self.loading_tiles.retain(|_, tile| {
             if asset_server.is_loaded(tile.handle.id()) {
                 let image = images.get(tile.handle.id()).unwrap();
-                let data = AttachmentData::from_bytes(&image.data, tile.format);
+                let data = AttachmentData::from_bytes(image.data.as_ref().unwrap(), tile.format);
                 atlas.tile_loaded(tile.tile.clone(), data);
 
                 false

@@ -243,7 +243,7 @@ impl<const I: usize, P: PhaseItem> RenderCommand<P> for SetTerrainBindGroup<I> {
         gpu_terrains: SystemParamItem<'w, '_, Self::Param>,
         pass: &mut TrackedRenderPass<'w>,
     ) -> RenderCommandResult {
-        let gpu_terrain = &gpu_terrains.into_inner()[&item.entity()];
+        let gpu_terrain = &gpu_terrains.into_inner()[&item.main_entity()];
 
         if let Some(bind_group) = &gpu_terrain.terrain_bind_group {
             pass.set_bind_group(I, bind_group, &[]);

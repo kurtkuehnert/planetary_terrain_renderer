@@ -58,7 +58,7 @@ pub(crate) fn spawn_terrains<M: Material>(
 
                 let config = configs.get(config.id()).unwrap().clone();
 
-                let root = big_space.single();
+                let root = big_space.single().unwrap();
 
                 let terrain = commands
                     .spawn((

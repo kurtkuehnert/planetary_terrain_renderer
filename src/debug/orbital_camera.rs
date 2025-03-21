@@ -1,14 +1,12 @@
-use crate::{
-    big_space::{FloatingOrigin, GridCell, Grids},
-    picking::PickingData,
-};
+use crate::picking::PickingData;
 use bevy::{
     color::palettes::basic,
-    input::{mouse::AccumulatedMouseMotion, ButtonInput},
+    input::{ButtonInput, mouse::AccumulatedMouseMotion},
     math::{DQuat, DVec2, DVec3, Mat4, Vec2},
     prelude::*,
     window::{CursorGrabMode, PrimaryWindow},
 };
+use big_space::prelude::*;
 
 fn ray_sphere_intersection(
     ray_origin: DVec3,
@@ -106,7 +104,7 @@ pub fn orbital_camera_controller(
     mut window: Query<&mut Window, With<PrimaryWindow>>,
 ) {
     let Ok((camera, mut camera_transform, mut camera_cell, picking_data, mut controller)) =
-        camera.get_single_mut()
+        camera.single_mut()
     else {
         return;
     };
@@ -121,7 +119,7 @@ pub fn orbital_camera_controller(
 
     let smoothing = (time.delta_secs_f64() / controller.time_to_reach_target).min(1.0);
     let grid = grids.parent_grid(camera).unwrap();
-    let mut window = window.single_mut();
+    let mut window = window.single_mut().unwrap();
 
     let terrain_origin = DVec3::ZERO;
     let camera_position = grid.grid_position_double(&camera_cell, &camera_transform);

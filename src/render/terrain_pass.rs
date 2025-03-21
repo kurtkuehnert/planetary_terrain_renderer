@@ -3,9 +3,10 @@ use bevy::{
     core_pipeline::{
         core_3d::CORE_3D_DEPTH_FORMAT, fullscreen_vertex_shader::fullscreen_shader_vertex_state,
     },
-    ecs::{entity::EntityHashSet, query::QueryItem},
+    ecs::query::QueryItem,
     prelude::*,
     render::{
+        Extract,
         camera::ExtractedCamera,
         render_graph::{NodeRunError, RenderGraphContext, RenderLabel, ViewNode},
         render_phase::{
@@ -14,10 +15,9 @@ use bevy::{
         },
         render_resource::{binding_types::texture_depth_2d_multisampled, *},
         renderer::{RenderContext, RenderDevice},
-        sync_world::{MainEntity, RenderEntity},
+        sync_world::MainEntity,
         texture::{CachedTexture, TextureCache},
-        view::{ViewDepthTexture, ViewTarget},
-        Extract,
+        view::{RetainedViewEntity, ViewDepthTexture, ViewTarget},
     },
 };
 use std::ops::Range;
@@ -61,7 +61,7 @@ impl PhaseItem for TerrainItem {
     }
 
     fn extra_index(&self) -> PhaseItemExtraIndex {
-        self.extra_index
+        self.extra_index.clone()
     }
 
     fn batch_range_and_extra_index_mut(&mut self) -> (&mut Range<u32>, &mut PhaseItemExtraIndex) {
@@ -75,6 +75,10 @@ impl SortedPhaseItem for TerrainItem {
     fn sort_key(&self) -> Self::SortKey {
         u32::MAX - self.order
     }
+
+    fn indexed(&self) -> bool {
+        false
+    }
 }
 
 impl CachedRenderPipelinePhaseItem for TerrainItem {
@@ -84,22 +88,25 @@ impl CachedRenderPipelinePhaseItem for TerrainItem {
 }
 
 pub fn extract_terrain_phases(
-    cameras_3d: Extract<Query<(RenderEntity, &Camera), With<Camera3d>>>,
-    mut live_entities: Local<EntityHashSet>,
     mut terrain_phases: ResMut<ViewSortedRenderPhases<TerrainItem>>,
+    cameras: Extract<Query<(Entity, &Camera), With<Camera3d>>>,
 ) {
-    live_entities.clear();
+    terrain_phases.clear();
 
-    for (entity, camera) in &cameras_3d {
+    for (entity, camera) in &cameras {
         if !camera.is_active {
             continue;
         }
 
-        terrain_phases.insert_or_clear(entity);
-        live_entities.insert(entity);
+        terrain_phases.insert(
+            RetainedViewEntity {
+                main_entity: entity.into(),
+                auxiliary_entity: Entity::PLACEHOLDER.into(),
+                subview_index: 0,
+            },
+            default(),
+        );
     }
-
-    terrain_phases.retain(|entity, _| live_entities.contains(entity));
 }
 
 #[derive(Component)]
@@ -233,6 +240,7 @@ pub struct TerrainPass;
 impl ViewNode for TerrainPass {
     type ViewQuery = (
         Entity,
+        MainEntity,
         &'static ExtractedCamera,
         &'static ViewTarget,
         &'static ViewDepthTexture,
@@ -243,7 +251,10 @@ impl ViewNode for TerrainPass {
         &self,
         _graph: &mut RenderGraphContext,
         render_context: &mut RenderContext<'w>,
-        (view, camera, target, depth, terrain_depth): QueryItem<'w, Self::ViewQuery>,
+        (render_view, main_view, camera, target, depth, terrain_depth): QueryItem<
+            'w,
+            Self::ViewQuery,
+        >,
         world: &'w World,
     ) -> Result<(), NodeRunError> {
         let device = world.resource::<RenderDevice>();
@@ -256,7 +267,13 @@ impl ViewNode for TerrainPass {
 
         let Some(terrain_phase) = world
             .get_resource::<ViewSortedRenderPhases<TerrainItem>>()
-            .and_then(|phase| phase.get(&view))
+            .and_then(|phase| {
+                phase.get(&RetainedViewEntity {
+                    main_entity: main_view.into(),
+                    auxiliary_entity: Entity::PLACEHOLDER.into(),
+                    subview_index: 0,
+                })
+            })
         else {
             return Ok(());
         };
@@ -296,7 +313,7 @@ impl ViewNode for TerrainPass {
                 pass.set_camera_viewport(viewport);
             }
 
-            terrain_phase.render(&mut pass, world, view).unwrap();
+            terrain_phase.render(&mut pass, world, render_view).unwrap();
             drop(pass);
 
             let mut pass = encoder.begin_render_pass(&RenderPassDescriptor {

@@ -124,13 +124,13 @@ impl AtlasBufferInfo {
         }
     }
 
-    pub(crate) fn image_copy_texture<'a>(
+    pub(crate) fn texture_copy_view<'a>(
         &'a self,
         texture: &'a Texture,
         index: u32,
         mip_level: u32,
-    ) -> ImageCopyTexture<'a> {
-        ImageCopyTexture {
+    ) -> TexelCopyTextureInfo<'a> {
+        TexelCopyTextureInfo {
             texture,
             mip_level,
             origin: Origin3d {
@@ -141,10 +141,10 @@ impl AtlasBufferInfo {
         }
     }
 
-    fn _image_copy_buffer<'a>(&'a self, buffer: &'a Buffer, index: u32) -> ImageCopyBuffer<'a> {
-        ImageCopyBuffer {
+    fn _buffer_copy_view<'a>(&'a self, buffer: &'a Buffer, index: u32) -> TexelCopyBufferInfo<'a> {
+        TexelCopyBufferInfo {
             buffer,
-            layout: ImageDataLayout {
+            layout: TexelCopyBufferLayout {
                 bytes_per_row: Some(self.aligned_side_size),
                 rows_per_image: Some(self.texture_size),
                 offset: self.buffer_size(index) as BufferAddress,
@@ -152,7 +152,7 @@ impl AtlasBufferInfo {
         }
     }
 
-    pub(crate) fn image_copy_size(&self, mip_level: u32) -> Extent3d {
+    pub(crate) fn extend_3d(&self, mip_level: u32) -> Extent3d {
         Extent3d {
             width: self.texture_size >> mip_level,
             height: self.texture_size >> mip_level,
@@ -332,10 +332,10 @@ impl GpuAttachment {
         for (section_index, tile) in self._atlas_write_slots.iter().enumerate() {
             command_encoder.copy_texture_to_buffer(
                 self.buffer_info
-                    .image_copy_texture(&self.atlas_texture, tile.atlas_index, 0),
+                    .texture_copy_view(&self.atlas_texture, tile.atlas_index, 0),
                 self.buffer_info
-                    ._image_copy_buffer(&self._atlas_write_section, section_index as u32),
-                self.buffer_info.image_copy_size(0),
+                    ._buffer_copy_view(&self._atlas_write_section, section_index as u32),
+                self.buffer_info.extend_3d(0),
             );
         }
     }
@@ -344,10 +344,10 @@ impl GpuAttachment {
         for (section_index, tile) in self._atlas_write_slots.iter().enumerate() {
             command_encoder.copy_buffer_to_texture(
                 self.buffer_info
-                    ._image_copy_buffer(&self._atlas_write_section, section_index as u32),
+                    ._buffer_copy_view(&self._atlas_write_section, section_index as u32),
                 self.buffer_info
-                    .image_copy_texture(&self.atlas_texture, tile.atlas_index, 0),
-                self.buffer_info.image_copy_size(0),
+                    .texture_copy_view(&self.atlas_texture, tile.atlas_index, 0),
+                self.buffer_info.extend_3d(0),
             );
         }
     }
@@ -357,9 +357,9 @@ impl GpuAttachment {
         {
             command_encoder.copy_texture_to_buffer(
                 self.buffer_info
-                    .image_copy_texture(&self.atlas_texture, tile.atlas_index, 0),
-                self.buffer_info._image_copy_buffer(download_buffer, 0),
-                self.buffer_info.image_copy_size(0),
+                    .texture_copy_view(&self.atlas_texture, tile.atlas_index, 0),
+                self.buffer_info._buffer_copy_view(download_buffer, 0),
+                self.buffer_info.extend_3d(0),
             );
         }
     }
