@@ -50,7 +50,7 @@ fn fragment_output(info: ptr<function, FragmentInfo>, output: ptr<function, Frag
     var pbr_input: PbrInput                 = pbr_input_new();
     pbr_input.material.base_color           = color;
     pbr_input.material.perceptual_roughness = 1.0;
-    pbr_input.material.reflectance          = 0.0;
+    pbr_input.material.reflectance          = vec3<f32>(0.0);
     pbr_input.frag_coord                    = (*info).clip_position;
     pbr_input.world_position                = world_position;
     pbr_input.world_normal                  = (*info).world_coordinate.normal;

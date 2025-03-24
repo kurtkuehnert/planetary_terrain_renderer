@@ -37,7 +37,8 @@ fn vertex_info(input: VertexInput) -> VertexInfo {
 
 fn vertex_output(info: ptr<function, VertexInfo>, height: f32) -> VertexOutput {
     var output: VertexOutput;
-    output.clip_position = position_world_to_clip(apply_height((*info).world_coordinate, height));
+//    output.clip_position = position_world_to_clip(apply_height((*info).world_coordinate, height));
+    output.clip_position = terrain_view.clip_from_world * vec4<f32>(apply_height((*info).world_coordinate, height), 1.0);
     output.tile_uv       = (*info).coordinate.uv;
     output.tile_index    = (*info).tile_index;
     output.view_distance = (*info).world_coordinate.view_distance;

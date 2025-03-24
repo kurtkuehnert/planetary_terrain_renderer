@@ -124,6 +124,7 @@ pub struct TileTree {
     pub(crate) view_world_position: Vec3,
     pub(crate) view_coordinates: [Coordinate; 6],
     pub(crate) half_spaces: [Vec4; 6],
+    pub(crate) clip_from_world: Mat4,
     #[cfg(feature = "high_precision")]
     pub(crate) surface_approximation: [crate::math::SurfaceApproximation; 6],
     pub(crate) approximate_height: f32,
@@ -202,6 +203,7 @@ impl TileTree {
             requested_tiles: default(),
             view_coordinates: default(),
             half_spaces: default(),
+            clip_from_world: Default::default(),
             #[cfg(feature = "high_precision")]
             surface_approximation: default(),
             approximate_height: 0.0,
@@ -345,6 +347,7 @@ impl TileTree {
             tile_tree.view_local_position = grid.grid_position_double(cell, transform);
             tile_tree.view_world_position = transform.translation;
             tile_tree.half_spaces = half_spaces;
+            tile_tree.clip_from_world = clip_from_world;
             tile_tree.update();
         }
     }
