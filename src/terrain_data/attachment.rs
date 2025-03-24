@@ -19,7 +19,7 @@ impl From<&AttachmentLabel> for String {
         match value {
             AttachmentLabel::Height => "height".to_string(),
             AttachmentLabel::Custom(name) => name.clone(),
-            AttachmentLabel::Empty(i) => format!("empty{i}").to_string(),
+            AttachmentLabel::Empty(i) => format!("empty_{}", (b'a' + *i as u8) as char).to_string(),
         }
     }
 }

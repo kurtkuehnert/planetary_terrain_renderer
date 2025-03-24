@@ -43,17 +43,21 @@ impl AssetLoader for TiffLoader {
             DecodingResult::I64(data) => cast_slice(&data).to_vec(),
         };
 
-        Ok(Image::new(
+        let mut image = Image::new_uninit(
             Extent3d {
                 width,
                 height,
                 depth_or_array_layers: 1,
             },
             TextureDimension::D2,
-            data,
             TextureFormat::bevy_default(),
             RenderAssetUsages::MAIN_WORLD,
-        ))
+        );
+
+        // Avoid Image::new size assert
+        image.data = Some(data);
+
+        Ok(image)
     }
 
     fn extensions(&self) -> &[&str] {

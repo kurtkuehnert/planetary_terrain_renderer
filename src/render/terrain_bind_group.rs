@@ -165,6 +165,7 @@ impl GpuTerrain {
                             .atlas_texture
                             .create_view(&TextureViewDescriptor {
                                 format: Some(attachment.buffer_info.format.render_format()),
+                                usage: Some(TextureUsages::TEXTURE_BINDING),
                                 ..default()
                             })
                     },
