@@ -18,7 +18,7 @@ fn high_precision(view_distance: f32) -> bool {
 fn compute_coordinate(vertex_index: u32) -> Coordinate {
     // use first and last indices of the rows twice, to form degenerate triangles
     let tile_index   = vertex_index / terrain_view.vertices_per_tile;
-    let column_index = (vertex_index % terrain_view.vertices_per_tile) / terrain_view.vertices_per_row;
+    let column_index = vertex_index % terrain_view.vertices_per_tile / terrain_view.vertices_per_row;
     let row_index    = clamp(vertex_index % terrain_view.vertices_per_row, 1u, terrain_view.vertices_per_row - 2u) - 1u;
     let grid_index   = vec2<u32>(column_index + (row_index & 1u), row_index >> 1u);
 
@@ -160,15 +160,15 @@ fn compute_morph(lod: u32, view_distance: f32) -> f32 {
 }
 
 fn compute_blend(view_distance: f32) -> Blend {
-    let target_lod = min(log2(terrain_view.blend_distance / view_distance), f32(terrain.lod_count) - 0.00001);
+    let target_lod = log2(terrain_view.blend_distance / view_distance);
 
 #ifdef BLEND
-    let ratio = select(saturate(1.0 - fract(target_lod) / terrain_view.blend_range), 0.0, target_lod < 1);
-
-    return Blend(u32(target_lod), ratio);
+    let ratio = saturate(1.0 - fract(target_lod) / terrain_view.blend_range);
 #else
-    return Blend(u32(target_lod), 0.0);
+    let ratio = 0.0;
 #endif
+
+    return Blend(min(u32(target_lod), terrain.lod_count - 1), select(ratio, 0.0, target_lod < 1 || u32(target_lod) >= terrain.lod_count));
 }
 
 fn compute_view_coordinate(face: u32, lod: u32) -> Coordinate {

@@ -18,7 +18,7 @@ fn final_index() -> u32 {
 }
 
 fn should_be_divided(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bool {
-    return world_coordinate.view_distance < terrain_view.subdivision_distance / exp2(f32(coordinate.lod + 1));
+    return exp2(f32(coordinate.lod + 1)) < terrain_view.subdivision_distance / world_coordinate.view_distance;
 }
 
 fn subdivide(tile: TileCoordinate) {
