@@ -1,3 +1,5 @@
+use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
+use bevy::render::diagnostic::RenderDiagnosticsPlugin;
 use bevy::{prelude::*, reflect::TypePath, render::render_resource::*};
 use bevy_terrain::prelude::*;
 
@@ -33,6 +35,9 @@ fn main() {
             TerrainMaterialPlugin::<CustomMaterial>::default(),
             TerrainDebugPlugin, // enable debug settings and controls
             TerrainPickingPlugin,
+            FrameTimeDiagnosticsPlugin::default(),
+            LogDiagnosticsPlugin::default(),
+            RenderDiagnosticsPlugin,
         ))
         .insert_resource(TerrainSettings::new(vec!["albedo"]))
         .add_systems(Startup, initialize)

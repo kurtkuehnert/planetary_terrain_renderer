@@ -8,6 +8,7 @@ use bevy::{
     render::{
         Extract,
         camera::ExtractedCamera,
+        diagnostic::RecordDiagnostics,
         render_graph::{NodeRunError, RenderGraphContext, RenderLabel, ViewNode},
         render_phase::{
             CachedRenderPipelinePhaseItem, DrawFunctionId, PhaseItem, PhaseItemExtraIndex,
@@ -250,7 +251,7 @@ impl ViewNode for TerrainPass {
     fn run<'w>(
         &self,
         _graph: &mut RenderGraphContext,
-        render_context: &mut RenderContext<'w>,
+        context: &mut RenderContext<'w>,
         (render_view, main_view, camera, target, depth, terrain_depth): QueryItem<
             'w,
             Self::ViewQuery,
@@ -298,8 +299,12 @@ impl ViewNode for TerrainPass {
         let terrain_depth_stencil_attachment = Some(terrain_depth.get_attachment());
         let depth_stencil_attachment = Some(depth.get_attachment(StoreOp::Store));
 
-        render_context.add_command_buffer_generation_task(move |device| {
+        let diagnostics = context.diagnostic_recorder();
+
+        context.add_command_buffer_generation_task(move |device| {
             let mut encoder = device.create_command_encoder(&CommandEncoderDescriptor::default());
+
+            let time_span = diagnostics.time_span(&mut encoder, "terrain_pass");
 
             let pass = encoder.begin_render_pass(&RenderPassDescriptor {
                 label: Some("terrain_pass"),
@@ -324,6 +329,8 @@ impl ViewNode for TerrainPass {
             pass.set_pipeline(pipeline);
             pass.draw(0..3, 0..1);
             drop(pass);
+
+            time_span.end(&mut encoder);
 
             encoder.finish()
         });
