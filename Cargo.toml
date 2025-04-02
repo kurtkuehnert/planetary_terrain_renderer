@@ -19,8 +19,8 @@ high_precision = ["dep:big_space"]
 rand = ["dep:rand"]
 
 [dependencies]
-bevy = "0.16.0-rc.1" #{ git="https://github.com/bevyengine/bevy/", branch="main" }
-bevy_common_assets = { git = "https://github.com/Argeo-Robotics/bevy_common_assets", branch = "upgrade-bevy-0.16.0", features = ["ron"] } # { version = "0.12.0", features = ["ron"] }
+bevy = "0.16.0-rc.3" #{ git="https://github.com/bevyengine/bevy/", branch="main" }
+bevy_common_assets = { git = "https://github.com/kurtkuehnert/bevy_common_assets", branch = "bevy-0.16", features = ["ron"] } # { version = "0.12.0", features = ["ron"] }
 big_space = { git = "https://github.com/bushrat011899/big_space", branch = "no_std", features = ["i32"], optional = true }  #{ version = "0.9", optional = true }
 tiff = "0.9"
 bytemuck = "1.14"

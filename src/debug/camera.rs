@@ -4,7 +4,7 @@ use big_space::{prelude::*, world_query::GridTransformItem};
 use bevy::{input::mouse::MouseMotion, math::DVec3, prelude::*};
 
 #[derive(Clone, Debug, Reflect, Component)]
-#[require(Camera3d, FloatingOrigin(|| FloatingOrigin))]
+#[require(Camera3d, FloatingOrigin = FloatingOrigin)]
 pub struct DebugCameraController {
     pub enabled: bool,
     /// Smoothness of translation, from `0.0` to `1.0`.

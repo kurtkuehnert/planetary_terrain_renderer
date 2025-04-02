@@ -28,7 +28,7 @@ fn main() {
 
     App::new()
         .add_plugins((
-            DefaultPlugins,
+            DefaultPlugins.build().disable::<TransformPlugin>(),
             TerrainPlugin,
             TerrainMaterialPlugin::<CustomMaterial>::default(),
             TerrainDebugPlugin, // enable debug settings and controls
@@ -133,7 +133,6 @@ fn initialize(
     //     },
     //     view,
     // );
-
     //
     // commands.spawn_terrain(
     //     asset_server.load("/Volumes/ExternalSSD/tiles/hartenstein/config.tc.ron"),

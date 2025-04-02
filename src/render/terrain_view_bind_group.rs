@@ -105,7 +105,6 @@ pub(crate) struct TerrainViewUniform {
     coordinates: [ViewCoordinate; 6],
     world_position: Vec3,
     half_spaces: [Vec4; 6],
-    clip_from_world: Mat4,
     #[cfg(feature = "high_precision")]
     surface_approximation: [crate::math::SurfaceApproximation; 6],
 }
@@ -132,7 +131,6 @@ impl From<&TileTree> for TerrainViewUniform {
                 .map(|view_coordinate| ViewCoordinate::new(view_coordinate, tile_tree.view_lod)),
             world_position: tile_tree.view_world_position,
             half_spaces: tile_tree.half_spaces,
-            clip_from_world: tile_tree.clip_from_world,
             #[cfg(feature = "high_precision")]
             surface_approximation: tile_tree.surface_approximation.clone(),
         }
