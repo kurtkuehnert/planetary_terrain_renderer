@@ -266,16 +266,10 @@ impl render_graph::Node for TilingPrepass {
             return Ok(());
         }
 
-        let diagnostics = context.diagnostic_recorder();
-
         context.add_command_buffer_generation_task(move |device| {
             let mut encoder = device.create_command_encoder(&CommandEncoderDescriptor::default());
 
-            let time_span = diagnostics.time_span(&mut encoder, "terrain_prepass");
-
             let mut pass = encoder.begin_compute_pass(&ComputePassDescriptor::default());
-
-            let pass_span = diagnostics.pass_span(&mut pass, "terrain_prepass");
 
             for (&(terrain, view), prepass_item) in prepass_items.iter() {
                 let Some((refine_tiles_pipeline, prepare_root_pipeline, prepare_render_pipeline)) =
@@ -312,11 +306,7 @@ impl render_graph::Node for TilingPrepass {
                 pass.dispatch_workgroups(1, 1, 1);
             }
 
-            pass_span.end(&mut pass);
-
             drop(pass);
-
-            time_span.end(&mut encoder);
 
             encoder.finish()
         });

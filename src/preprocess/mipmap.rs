@@ -111,12 +111,8 @@ impl render_graph::Node for MipPrepass {
         let pipeline_cache = world.resource::<PipelineCache>();
         let gpu_tile_atlases = world.resource::<TerrainComponents<GpuTileAtlas>>();
 
-        let diagnostics = context.diagnostic_recorder();
-
         context.add_command_buffer_generation_task(move |device| {
             let mut encoder = device.create_command_encoder(&CommandEncoderDescriptor::default());
-
-            let time_span = diagnostics.time_span(&mut encoder, "mipmap_pass");
 
             let mut pass = encoder.begin_compute_pass(&ComputePassDescriptor::default());
 
@@ -125,8 +121,6 @@ impl render_graph::Node for MipPrepass {
             }
 
             drop(pass);
-
-            time_span.end(&mut encoder);
 
             encoder.finish()
         });

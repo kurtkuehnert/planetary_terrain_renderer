@@ -11,12 +11,18 @@ use bevy::{
     render::{Extract, RenderApp, render_resource::*},
     window::PrimaryWindow,
 };
+
 mod approximation_debug;
 mod camera;
 mod orbital_camera;
 
 pub(crate) use self::{approximation_debug::*, camera::*, orbital_camera::*};
 pub use self::{camera::DebugCameraController, orbital_camera::OrbitalCameraController};
+
+#[cfg(feature = "metal_capture")]
+mod metal_capture;
+#[cfg(feature = "metal_capture")]
+pub use self::metal_capture::MetalCapturePlugin;
 
 #[derive(Asset, AsBindGroup, TypePath, Clone, Default)]
 pub struct DebugTerrainMaterial {}
@@ -28,7 +34,8 @@ pub struct TerrainDebugPlugin;
 
 impl Plugin for TerrainDebugPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<DebugTerrain>()
+        app.add_plugins(MetalCapturePlugin)
+            .init_resource::<DebugTerrain>()
             .init_resource::<LoadingImages>()
             .add_systems(Startup, (debug_lighting, debug_window))
             .add_systems(

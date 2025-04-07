@@ -1,5 +1,3 @@
-use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
-use bevy::render::diagnostic::RenderDiagnosticsPlugin;
 use bevy::{prelude::*, reflect::TypePath, render::render_resource::*};
 use bevy_terrain::prelude::*;
 
@@ -35,9 +33,6 @@ fn main() {
             TerrainMaterialPlugin::<CustomMaterial>::default(),
             TerrainDebugPlugin, // enable debug settings and controls
             TerrainPickingPlugin,
-            FrameTimeDiagnosticsPlugin::default(),
-            LogDiagnosticsPlugin::default(),
-            RenderDiagnosticsPlugin,
         ))
         .insert_resource(TerrainSettings::new(vec!["albedo"]))
         .add_systems(Startup, initialize)
@@ -86,7 +81,7 @@ fn initialize(
         },
         view,
     );
-
+    //
     // commands.spawn_terrain(
     //     asset_server.load("terrains/los/config.tc.ron"),
     //     TerrainViewConfig {
@@ -139,18 +134,7 @@ fn initialize(
     //     view,
     // );
     //
-    // commands.spawn_terrain(
-    //     asset_server.load("/Volumes/ExternalSSD/tiles/hartenstein/config.tc.ron"),
-    //     TerrainViewConfig {
-    //         order: 1,
-    //         ..default()
-    //     },
-    //     CustomMaterial {
-    //         gradient: gradient2.clone(),
-    //         gradient_info: GradientInfo { mode: 2 },
-    //     },
-    //     view,
-    // );
+    //
     //
     // commands.spawn_terrain(
     //     asset_server.load("terrains/swiss/config.tc.ron"),
@@ -164,4 +148,17 @@ fn initialize(
     //     },
     //     view,
     // );
+    //
+    // // commands.spawn_terrain(
+    // //     asset_server.load("/Volumes/ExternalSSD/tiles/hartenstein/config.tc.ron"),
+    // //     TerrainViewConfig {
+    // //         order: 1,
+    // //         ..default()
+    // //     },
+    // //     CustomMaterial {
+    // //         gradient: gradient2.clone(),
+    // //         gradient_info: GradientInfo { mode: 2 },
+    // //     },
+    // //     view,
+    // // );
 }

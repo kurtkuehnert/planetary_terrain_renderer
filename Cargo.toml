@@ -17,11 +17,11 @@ members = ["preprocess"]
 [features]
 high_precision = ["dep:big_space"]
 rand = ["dep:rand"]
+metal_capture = ["dep:metal", "dep:wgpu-core"]
 
 [dependencies]
 bevy = "0.16.0-rc.3" #{ git="https://github.com/bevyengine/bevy/", branch="main" }
 bevy_common_assets = { git = "https://github.com/kurtkuehnert/bevy_common_assets", branch = "bevy-0.16", features = ["ron"] } # { version = "0.12.0", features = ["ron"] }
-big_space = { git = "https://github.com/bushrat011899/big_space", branch = "no_std", features = ["i32"], optional = true }  #{ version = "0.9", optional = true }
 tiff = "0.9"
 bytemuck = "1.14"
 ndarray = "0.16.1"
@@ -31,10 +31,13 @@ serde = "1.0.210"
 async-channel = "2.1"
 derive_more = { version = "2.0.1", features = ["from"] }
 slab = "0.4.9"
-rand = { version = "0.9.0", optional = true }
 strum = "0.27.1"
 strum_macros = "0.27.1"
 
+big_space = { git = "https://github.com/bushrat011899/big_space", branch = "no_std", features = ["i32"], optional = true }  #{ version = "0.9", optional = true }
+rand = { version = "0.9.0", optional = true }
+metal = { version = "0.31.0", optional = true }
+wgpu-core = { version = "24.0.2", optional = true }
 
 [[example]]
 name = "spherical"
