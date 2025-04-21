@@ -1,6 +1,7 @@
 .idea
 Cargo.lock
 target
+captures
 assets/**/data/*
 assets/**/config.tc
 assets/terrains/
