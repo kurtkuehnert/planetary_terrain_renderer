@@ -24,8 +24,6 @@ impl Material for CustomMaterial {
 }
 
 fn main() {
-    // std::thread::sleep(std::time::Duration::from_secs(1));
-
     App::new()
         .add_plugins((
             DefaultPlugins.build().disable::<TransformPlugin>(),

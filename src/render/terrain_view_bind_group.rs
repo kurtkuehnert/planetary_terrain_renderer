@@ -66,10 +66,10 @@ pub(crate) struct GeometryTile {
 
 #[derive(ShaderType)]
 pub(crate) struct Indirect {
-    vertex_count: u32,
-    instance_count: u32,
-    first_vertex: u32,
-    first_instance: u32,
+    x_or_vertex_count: u32,
+    y_or_instance_count: u32,
+    z_or_base_vertex: u32,
+    base_instance: u32,
 }
 
 #[derive(ShaderType)]
@@ -139,6 +139,7 @@ impl From<&TileTree> for TerrainViewUniform {
 
 pub struct GpuTerrainView {
     pub(crate) order: u32,
+    pub(crate) refinement_count: u32,
     pub(crate) indirect_buffer: Buffer,
     pub(crate) indirect_bind_group: Option<BindGroup>,
     pub(crate) prepass_view_bind_group: Option<BindGroup>,
@@ -198,6 +199,7 @@ impl GpuTerrainView {
 
         Self {
             order: tile_tree.order,
+            refinement_count: tile_tree.refinement_count,
             indirect_buffer: indirect,
             indirect: prepare_prepass,
             prepass_view: refine_tiles,

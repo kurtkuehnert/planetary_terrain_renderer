@@ -5,7 +5,7 @@ use crate::{
         terrain_bind_group::TerrainBindGroup,
         terrain_view_bind_group::{IndirectBindGroup, PrepassViewBindGroup, TerrainViewBindGroup},
     },
-    shaders::PREPASS_SHADER,
+    shaders::{PREPARE_PREPASS_SHADER, REFINE_TILES_SHADER},
     terrain::TerrainComponents,
     terrain_data::GpuTileAtlas,
     terrain_view::TerrainViewComponents,
@@ -24,16 +24,17 @@ bitflags::bitflags! {
     #[repr(transparent)]
     pub struct TilingPrepassPipelineKey: u32 {
         const NONE           = 0;
-        const REFINE_TILES   = 1 << 0;
-        const PREPARE_ROOT   = 1 << 1;
-        const PREPARE_RENDER = 1 << 2;
-        const SPHERICAL      = 1 << 3;
-        const HIGH_PRECISION = 1 << 4;
-        const MORPH          = 1 << 5;
-        const BLEND          = 1 << 6;
-        const TEST1          = 1 << 7;
-        const TEST2          = 1 << 8;
-        const TEST3          = 1 << 9;
+        const REFINE_TILES   = 1 <<  0;
+        const PREPARE_ROOT   = 1 <<  1;
+        const PREPARE_NEXT   = 1 <<  2;
+        const PREPARE_RENDER = 1 <<  3;
+        const SPHERICAL      = 1 <<  4;
+        const HIGH_PRECISION = 1 <<  5;
+        const MORPH          = 1 <<  6;
+        const BLEND          = 1 <<  7;
+        const TEST1          = 1 <<  8;
+        const TEST2          = 1 <<  9;
+        const TEST3          = 1 << 10;
     }
 }
 
@@ -99,6 +100,7 @@ impl TilingPrepassPipelineKey {
 pub(crate) struct TilingPrepassItem {
     refine_tiles_pipeline: CachedComputePipelineId,
     prepare_root_pipeline: CachedComputePipelineId,
+    prepare_next_pipeline: CachedComputePipelineId,
     prepare_render_pipeline: CachedComputePipelineId,
 }
 
@@ -110,10 +112,12 @@ impl TilingPrepassItem {
         &'a ComputePipeline,
         &'a ComputePipeline,
         &'a ComputePipeline,
+        &'a ComputePipeline,
     )> {
         Some((
             pipeline_cache.get_compute_pipeline(self.refine_tiles_pipeline)?,
             pipeline_cache.get_compute_pipeline(self.prepare_root_pipeline)?,
+            pipeline_cache.get_compute_pipeline(self.prepare_next_pipeline)?,
             pipeline_cache.get_compute_pipeline(self.prepare_render_pipeline)?,
         ))
     }
@@ -125,7 +129,8 @@ pub struct TerrainTilingPrepassPipelines {
     pub(crate) terrain_view_layout: BindGroupLayout,
     pub(crate) indirect_layout: BindGroupLayout,
     pub(crate) prepass_view_layout: BindGroupLayout,
-    prepass_shader: Handle<Shader>,
+    prepare_prepass_shader: Handle<Shader>,
+    refine_tiles_shader: Handle<Shader>,
 }
 
 impl FromWorld for TerrainTilingPrepassPipelines {
@@ -137,14 +142,16 @@ impl FromWorld for TerrainTilingPrepassPipelines {
         let indirect_layout = IndirectBindGroup::bind_group_layout(device);
         let prepass_view_layout = PrepassViewBindGroup::bind_group_layout(device);
 
-        let prepass_shader = world.load_asset(PREPASS_SHADER);
+        let prepare_prepass_shader = world.load_asset(PREPARE_PREPASS_SHADER);
+        let refine_tiles_shader = world.load_asset(REFINE_TILES_SHADER);
 
         TerrainTilingPrepassPipelines {
             terrain_view_layout,
             indirect_layout,
             prepass_view_layout,
             terrain_layout,
-            prepass_shader,
+            prepare_prepass_shader,
+            refine_tiles_shader,
         }
     }
 }
@@ -164,16 +171,26 @@ impl SpecializedComputePipeline for TerrainTilingPrepassPipelines {
                 self.prepass_view_layout.clone(),
                 self.terrain_layout.clone(),
             ];
-            shader = self.prepass_shader.clone();
+            shader = self.refine_tiles_shader.clone();
             entry_point = "refine_tiles".into();
         }
         if key.contains(TilingPrepassPipelineKey::PREPARE_ROOT) {
             layout = vec![
                 self.prepass_view_layout.clone(),
                 self.terrain_layout.clone(),
+                self.indirect_layout.clone(),
             ];
-            shader = self.prepass_shader.clone();
+            shader = self.prepare_prepass_shader.clone();
             entry_point = "prepare_root".into();
+        }
+        if key.contains(TilingPrepassPipelineKey::PREPARE_NEXT) {
+            layout = vec![
+                self.prepass_view_layout.clone(),
+                self.terrain_layout.clone(),
+                self.indirect_layout.clone(),
+            ];
+            shader = self.prepare_prepass_shader.clone();
+            entry_point = "prepare_next".into();
         }
         if key.contains(TilingPrepassPipelineKey::PREPARE_RENDER) {
             layout = vec![
@@ -181,7 +198,7 @@ impl SpecializedComputePipeline for TerrainTilingPrepassPipelines {
                 self.terrain_layout.clone(),
                 self.indirect_layout.clone(),
             ];
-            shader = self.prepass_shader.clone();
+            shader = self.prepare_prepass_shader.clone();
             entry_point = "prepare_render".into();
         }
 
@@ -194,6 +211,86 @@ impl SpecializedComputePipeline for TerrainTilingPrepassPipelines {
             entry_point,
             zero_initialize_workgroup_memory: false,
         }
+    }
+}
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone, RenderLabel)]
+pub struct TilingPrepass;
+
+impl render_graph::Node for TilingPrepass {
+    fn run<'w>(
+        &self,
+        _graph: &mut render_graph::RenderGraphContext,
+        context: &mut RenderContext<'w>,
+        world: &'w World,
+    ) -> Result<(), render_graph::NodeRunError> {
+        let prepass_items = world.resource::<TerrainViewComponents<TilingPrepassItem>>();
+        let pipeline_cache = world.resource::<PipelineCache>();
+        let gpu_terrains = world.resource::<TerrainComponents<GpuTerrain>>();
+        let gpu_terrain_views = world.resource::<TerrainViewComponents<GpuTerrainView>>();
+        let debug = world.get_resource::<DebugTerrain>();
+
+        if debug.map(|debug| debug.freeze).unwrap_or(false) {
+            return Ok(());
+        }
+
+        context.add_command_buffer_generation_task(move |device| {
+            let mut encoder = device.create_command_encoder(&CommandEncoderDescriptor::default());
+            let mut pass = encoder.begin_compute_pass(&ComputePassDescriptor::default());
+
+            for (&(terrain, view), prepass_item) in prepass_items.iter() {
+                let Some((
+                    refine_tiles_pipeline,
+                    prepare_root_pipeline,
+                    prepare_next_pipeline,
+                    prepare_render_pipeline,
+                )) = prepass_item.pipelines(pipeline_cache)
+                else {
+                    continue;
+                };
+
+                let gpu_terrain = &gpu_terrains[&terrain];
+                let gpu_terrain_view = &gpu_terrain_views[&(terrain, view)];
+
+                let Some(terrain_bind_group) = &gpu_terrain.terrain_bind_group else {
+                    continue;
+                };
+                let Some(prepass_view_bind_group) = &gpu_terrain_view.prepass_view_bind_group
+                else {
+                    continue;
+                };
+                let Some(indirect_bind_group) = &gpu_terrain_view.indirect_bind_group else {
+                    continue;
+                };
+
+                pass.set_bind_group(0, prepass_view_bind_group, &[]);
+                pass.set_bind_group(1, terrain_bind_group, &[]);
+                pass.set_bind_group(2, indirect_bind_group, &[]);
+
+                pass.set_pipeline(prepare_root_pipeline);
+                pass.dispatch_workgroups(1, 1, 1);
+
+                for _ in 0..gpu_terrain_view.refinement_count {
+                    pass.set_pipeline(refine_tiles_pipeline);
+                    pass.dispatch_workgroups_indirect(&gpu_terrain_view.indirect_buffer, 0);
+
+                    pass.set_pipeline(prepare_next_pipeline);
+                    pass.dispatch_workgroups(1, 1, 1);
+                }
+
+                pass.set_pipeline(refine_tiles_pipeline);
+                pass.dispatch_workgroups_indirect(&gpu_terrain_view.indirect_buffer, 0);
+
+                pass.set_pipeline(prepare_render_pipeline);
+                pass.dispatch_workgroups(1, 1, 1);
+            }
+
+            drop(pass);
+
+            encoder.finish()
+        });
+
+        Ok(())
     }
 }
 
@@ -229,6 +326,11 @@ pub(crate) fn queue_tiling_prepass(
             &prepass_pipelines,
             key | TilingPrepassPipelineKey::PREPARE_ROOT,
         );
+        let prepare_next_pipeline = pipelines.specialize(
+            &pipeline_cache,
+            &prepass_pipelines,
+            key | TilingPrepassPipelineKey::PREPARE_NEXT,
+        );
         let prepare_render_pipeline = pipelines.specialize(
             &pipeline_cache,
             &prepass_pipelines,
@@ -240,77 +342,9 @@ pub(crate) fn queue_tiling_prepass(
             TilingPrepassItem {
                 refine_tiles_pipeline,
                 prepare_root_pipeline,
+                prepare_next_pipeline,
                 prepare_render_pipeline,
             },
         );
-    }
-}
-
-#[derive(Debug, Hash, PartialEq, Eq, Clone, RenderLabel)]
-pub struct TilingPrepass;
-
-impl render_graph::Node for TilingPrepass {
-    fn run<'w>(
-        &self,
-        _graph: &mut render_graph::RenderGraphContext,
-        context: &mut RenderContext<'w>,
-        world: &'w World,
-    ) -> Result<(), render_graph::NodeRunError> {
-        let prepass_items = world.resource::<TerrainViewComponents<TilingPrepassItem>>();
-        let pipeline_cache = world.resource::<PipelineCache>();
-        let gpu_terrains = world.resource::<TerrainComponents<GpuTerrain>>();
-        let gpu_terrain_views = world.resource::<TerrainViewComponents<GpuTerrainView>>();
-        let debug = world.get_resource::<DebugTerrain>();
-
-        if debug.map(|debug| debug.freeze).unwrap_or(false) {
-            return Ok(());
-        }
-
-        context.add_command_buffer_generation_task(move |device| {
-            let mut encoder = device.create_command_encoder(&CommandEncoderDescriptor::default());
-
-            let mut pass = encoder.begin_compute_pass(&ComputePassDescriptor::default());
-
-            for (&(terrain, view), prepass_item) in prepass_items.iter() {
-                let Some((refine_tiles_pipeline, prepare_root_pipeline, prepare_render_pipeline)) =
-                    prepass_item.pipelines(pipeline_cache)
-                else {
-                    continue;
-                };
-
-                let gpu_terrain = &gpu_terrains[&terrain];
-                let gpu_terrain_view = &gpu_terrain_views[&(terrain, view)];
-
-                let Some(terrain_bind_group) = &gpu_terrain.terrain_bind_group else {
-                    continue;
-                };
-                let Some(prepass_view_bind_group) = &gpu_terrain_view.prepass_view_bind_group
-                else {
-                    continue;
-                };
-                let Some(indirect_bind_group) = &gpu_terrain_view.indirect_bind_group else {
-                    continue;
-                };
-
-                pass.set_bind_group(0, prepass_view_bind_group, &[]);
-                pass.set_bind_group(1, terrain_bind_group, &[]);
-                pass.set_bind_group(2, indirect_bind_group, &[]);
-
-                pass.set_pipeline(prepare_root_pipeline);
-                pass.dispatch_workgroups(1, 1, 1);
-
-                pass.set_pipeline(refine_tiles_pipeline);
-                pass.dispatch_workgroups(1, 1, 1);
-
-                pass.set_pipeline(prepare_render_pipeline);
-                pass.dispatch_workgroups(1, 1, 1);
-            }
-
-            drop(pass);
-
-            encoder.finish()
-        });
-
-        Ok(())
     }
 }
