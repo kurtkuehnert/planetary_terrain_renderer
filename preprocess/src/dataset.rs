@@ -151,6 +151,10 @@ impl PreprocessContext {
                 }
             })
             .flatten()
+            .filter(|path| {
+                let path = path.to_str().unwrap();
+                path.ends_with(".tif") || path.ends_with(".tiff")
+            })
             .map(|path| Dataset::open(path).unwrap())
             .collect_vec();
 

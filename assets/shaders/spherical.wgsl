@@ -76,6 +76,17 @@ fn fragment(input: FragmentInput) -> FragmentOutput {
     var color            = sample_color(tile);
     var surface_gradient = sample_surface_gradient(tile, info.tangent_space);
 
+//    let uv_res_per_pixel = max(length(tile.coordinate.uv_dx), length(tile.coordinate.uv_dy)) * attachments.height.center_size;
+//
+//    if (uv_res_per_pixel > 2.0) {
+//        color = vec4<f32>(0.0, 0.0, 0.0, 1.0);
+//    } else {
+//        color = vec4<f32>(2.0 - uv_res_per_pixel, 0.0, 0.0, 1.0);
+//    }
+
+//    color = textureSampleLevel(gradient, gradient_sampler, vec2<f32>(uv_res_per_pixel / 10.0 , 0.5), 0.0);
+//    color = vec4<f32>(log2(uv_res_per_pixel), 0.0, 0.0, 1.0);
+
     if mask { discard; }
 
 //    color = vec4(vec3(0.3), 1.0);

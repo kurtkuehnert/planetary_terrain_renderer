@@ -1,3 +1,4 @@
+use bevy::window::WindowResolution;
 use bevy::{
     color::palettes::basic,
     math::{DVec2, DVec3},
@@ -30,8 +31,8 @@ fn compute_errors() -> Errors {
     let view_samples = 1000000;
     let surface_samples = 10;
     let view_lod = 16;
-    let threshold = 10000.0;
-    let min_tile_lod = (shape.scale_f32() / threshold).log2().ceil() as u32;
+    let threshold = 32000.0;
+    let min_tile_lod = (shape.scale_scalar() / threshold).log2().ceil() as u32;
     let max_tile_lod = 20;
 
     // The approximation is as good as the f32 computation (2m max error), at distances below 0.005 * RADIUS (30km) around the camera.
@@ -114,7 +115,7 @@ fn compute_errors() -> Errors {
 
     println!(
         "With a threshold factor of {} and an view LOD of {view_lod}, the error in a sample distance of {:.4} m around the camera looks like this.",
-        threshold / shape.scale_f32(),
+        threshold / shape.scale_scalar(),
         threshold
     );
     println!(
@@ -122,7 +123,7 @@ fn compute_errors() -> Errors {
         taylor1_avg, taylor1_max
     );
     println!(
-        "The world space error introduced by the second order taylor approximation is {:.4} m on average and {:.4} m at the maximum.",
+        "The world space error introduced by the second order taylor approximation is {:.8} m on average and {:.8} m at the maximum.",
         taylor2_avg, taylor2_max
     );
     println!(
@@ -145,7 +146,16 @@ fn main() {
 
     App::new()
         .add_plugins((
-            DefaultPlugins.build().disable::<TransformPlugin>(),
+            DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        resolution: WindowResolution::new(1920.0, 1080.0),
+                        ..default()
+                    }),
+                    ..default()
+                })
+                .build()
+                .disable::<TransformPlugin>(),
             TerrainPlugin,
             TerrainDebugPlugin,
         ))
@@ -291,8 +301,7 @@ fn random_sample_position(
     shape.position_unit_to_local(
         shape.position_local_to_unit(
             view_local_position
-                + (rng.random_range(0.0..1.0)
-                    * threshold
+                + (threshold
                     * DVec3::new(
                         rng.random_range(-1.0..1.0),
                         rng.random_range(-1.0..1.0),

@@ -122,7 +122,7 @@ fn no_data_cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bo
 
 fn cull(coordinate: Coordinate, world_coordinate: WorldCoordinate) -> bool {
 //    if (frustum_cull_aabb(coordinate)) { return true; }
-//    if (frustum_cull_sphere(coordinate)) { return true; }
+    if (frustum_cull_sphere(coordinate)) { return true; }
     if (horizon_cull(coordinate, world_coordinate)) { return true; }
     if (no_data_cull(coordinate, world_coordinate)) { return true; }
 

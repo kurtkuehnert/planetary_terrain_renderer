@@ -15,7 +15,11 @@ impl TerrainShape {
         minor_axis: 6356752.314245,
     };
 
-    pub fn scale_f32(self) -> f64 {
+    pub fn face_size(self) -> f64 {
+        2.0 * std::f64::consts::PI / 4.0 * self.scale_scalar()
+    }
+
+    pub fn scale_scalar(self) -> f64 {
         match self {
             TerrainShape::Plane { side_length } => side_length / 2.0,
             TerrainShape::Sphere { radius } => radius,

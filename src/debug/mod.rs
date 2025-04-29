@@ -34,8 +34,7 @@ pub struct TerrainDebugPlugin;
 
 impl Plugin for TerrainDebugPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(MetalCapturePlugin)
-            .init_resource::<DebugTerrain>()
+        app.init_resource::<DebugTerrain>()
             .init_resource::<LoadingImages>()
             .add_systems(Startup, (debug_lighting, debug_window))
             .add_systems(
@@ -53,6 +52,8 @@ impl Plugin for TerrainDebugPlugin {
                 Last,
                 debug_surface_approximation.after(TileTree::generate_surface_approximation),
             );
+        #[cfg(feature = "metal_capture")]
+        app.add_plugins(MetalCapturePlugin);
 
         app.sub_app_mut(RenderApp)
             .init_resource::<DebugTerrain>()
@@ -250,35 +251,39 @@ pub fn update_view_parameter(
     mut tile_trees: ResMut<TerrainViewComponents<TileTree>>,
 ) {
     for tile_tree in tile_trees.values_mut() {
-        let scale = tile_tree.shape.scale_f32();
+        let face_size = tile_tree.shape.face_size();
 
         if input.just_pressed(KeyCode::KeyN) {
-            tile_tree.blend_distance -= 0.25 * scale;
+            tile_tree.blend_distance -= 0.25 * face_size;
+            tile_tree.load_distance -= 0.25 * face_size;
             println!(
-                "Decreased the blend distance to {}.",
-                tile_tree.blend_distance / scale
+                "Decreased the blend and load distance to {}.",
+                tile_tree.blend_distance / face_size
             );
         }
         if input.just_pressed(KeyCode::KeyE) {
-            tile_tree.blend_distance += 0.25 * scale;
+            tile_tree.blend_distance += 0.25 * face_size;
+            tile_tree.load_distance += 0.25 * face_size;
             println!(
-                "Increased the blend distance to {}.",
-                tile_tree.blend_distance / scale
+                "Increased the blend and load distance to {}.",
+                tile_tree.blend_distance / face_size
             );
         }
 
         if input.just_pressed(KeyCode::KeyI) {
-            tile_tree.morph_distance -= 0.25 * scale;
+            tile_tree.morph_distance -= face_size;
+            tile_tree.subdivision_distance -= face_size;
             println!(
                 "Decreased the morph distance to {}.",
-                tile_tree.morph_distance / scale
+                tile_tree.morph_distance / face_size
             );
         }
         if input.just_pressed(KeyCode::KeyO) {
-            tile_tree.morph_distance += 0.25 * scale;
+            tile_tree.morph_distance += face_size;
+            tile_tree.subdivision_distance += face_size;
             println!(
                 "Increased the morph distance to {}.",
-                tile_tree.morph_distance / scale
+                tile_tree.morph_distance / face_size
             );
         }
 

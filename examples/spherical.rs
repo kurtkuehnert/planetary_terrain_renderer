@@ -1,3 +1,4 @@
+use bevy::window::WindowResolution;
 use bevy::{prelude::*, reflect::TypePath, render::render_resource::*};
 use bevy_terrain::prelude::*;
 
@@ -26,13 +27,23 @@ impl Material for CustomMaterial {
 fn main() {
     App::new()
         .add_plugins((
-            DefaultPlugins.build().disable::<TransformPlugin>(),
+            DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        resolution: WindowResolution::new(1920.0, 1080.0),
+                        ..default()
+                    }),
+                    ..default()
+                })
+                .build()
+                .disable::<TransformPlugin>(),
             TerrainPlugin,
             TerrainMaterialPlugin::<CustomMaterial>::default(),
             TerrainDebugPlugin, // enable debug settings and controls
             TerrainPickingPlugin,
         ))
         .insert_resource(TerrainSettings::new(vec!["albedo"]))
+        // .insert_resource(ClearColor(Color::WHITE))
         .add_systems(Startup, initialize)
         .run();
 }
@@ -75,11 +86,11 @@ fn initialize(
         TerrainViewConfig::default(),
         CustomMaterial {
             gradient: gradient1.clone(),
-            gradient_info: GradientInfo { mode: 1 },
+            gradient_info: GradientInfo { mode: 2 },
         },
         view,
     );
-    //
+
     // commands.spawn_terrain(
     //     asset_server.load("terrains/los/config.tc.ron"),
     //     TerrainViewConfig {
@@ -92,7 +103,7 @@ fn initialize(
     //     },
     //     view,
     // );
-    //
+    // //
     // commands.spawn_terrain(
     //     asset_server.load("terrains/npd/config.tc.ron"),
     //     TerrainViewConfig {
@@ -131,8 +142,7 @@ fn initialize(
     //     },
     //     view,
     // );
-    //
-    //
+
     //
     // commands.spawn_terrain(
     //     asset_server.load("terrains/swiss/config.tc.ron"),
@@ -147,16 +157,16 @@ fn initialize(
     //     view,
     // );
     //
-    // // commands.spawn_terrain(
-    // //     asset_server.load("/Volumes/ExternalSSD/tiles/hartenstein/config.tc.ron"),
-    // //     TerrainViewConfig {
-    // //         order: 1,
-    // //         ..default()
-    // //     },
-    // //     CustomMaterial {
-    // //         gradient: gradient2.clone(),
-    // //         gradient_info: GradientInfo { mode: 2 },
-    // //     },
-    // //     view,
-    // // );
+    commands.spawn_terrain(
+        asset_server.load("terrains/hartenstein/config.tc.ron"),
+        TerrainViewConfig {
+            order: 1,
+            ..default()
+        },
+        CustomMaterial {
+            gradient: gradient2.clone(),
+            gradient_info: GradientInfo { mode: 2 },
+        },
+        view,
+    );
 }

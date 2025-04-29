@@ -110,8 +110,8 @@ impl SurfaceApproximation {
             SurfaceApproximation {
                 p: (view_coordinate.local_position(shape, 0.0) - view_local_position).as_vec3()
                     + view_world_position,
-                p_du: Vec3::X * shape.scale_f32() as f32 * 2.0,
-                p_dv: Vec3::Z * shape.scale_f32() as f32 * 2.0,
+                p_du: Vec3::X * shape.scale_scalar() as f32 * 2.0,
+                p_dv: Vec3::Z * shape.scale_scalar() as f32 * 2.0,
                 p_duu: Vec3::ZERO,
                 p_duv: Vec3::ZERO,
                 p_dvv: Vec3::ZERO,

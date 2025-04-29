@@ -35,13 +35,13 @@ pub(crate) fn debug_surface_approximation(
                 p_dvv,
             } = tile_tree.surface_approximation[face as usize].clone();
 
-            let height = shape.scale_f32() as f32 * 0.02;
+            let height = shape.scale_scalar() as f32 * 0.02;
             let normal = p_dv.cross(p_du).normalize();
             let position = p + height * normal;
 
             gizmos.sphere(
                 position,
-                0.01 * DEBUG_SCALE * shape.scale_f32() as f32,
+                0.01 * DEBUG_SCALE * shape.scale_scalar() as f32,
                 basic::OLIVE,
             );
             gizmos.arrow(position, position + p_du * DEBUG_SCALE, basic::YELLOW);
