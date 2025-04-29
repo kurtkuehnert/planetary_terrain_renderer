@@ -1,28 +1,50 @@
-# Bevy Terrain
+# Planetary Terrain Renderer
 
-![GitHub](https://img.shields.io/github/license/Ku95/bevy_terrain)
-![Discord](https://img.shields.io/discord/999221999517843456?label=discord)
-<!--
-![Crates.io](https://img.shields.io/crates/v/bevy_terrain)
-![docs.rs](https://img.shields.io/docsrs/bevy_terrain)
--->
+# Terrain Renderer
 
-Bevy Terrain is a plugin for rendering terrains with the Bevy game engine.
-This plugin supports planar[^1] and spherical/ellipsoidal terrains of (almost) any size and resolution.
+A large-scale planetary terrain renderer written in Rust using the Bevy game engine.
 
-![](https://user-images.githubusercontent.com/51823519/202845032-0537e929-b13c-410b-8072-4c5b5df9830d.png)
-(Data Source: Federal Office of Topography, [©swisstopo](https://www.swisstopo.admin.ch/en/home.html))
+This project is developed by [Kurt Kühnert](https://github.com/kurtkuehnert) and contains the reference implementation
+of my master thesis.
+This terrain renderer focuses on visualizing large-scale terrains in a seamless, continuous, and efficient manner.
+The source code was developed as the open-source plugin **[bevy_terrain](https://github.com/kurtkuehnert/bevy_terrain)**
+for the Bevy game engine.
 
-**Warning:** This plugin is still in early development, so expect the API to change and possibly break your existing
-code.
+Additionally, this repository contains the full version of my *
+*[Master Thesis](https://github.com/kurtkuehnert/planetary_terrain_renderer/blob/main/Thesis.pdf)** describing the novel
+terrain rendering framework in great detail.
+A [citable version](https://monarch.qucosa.de/landing-page/?tx_dlf[id]=https%3A%2F%2Fmonarch.qucosa.de%2Fapi%2Fqucosa%253A82570%2Fmets)
+is also available.
 
-Bevy Terrain was developed as part of my [bachelor thesis](https://github.com/kurtkuehnert/terrain_renderer) and
-my [master thesis](https://github.com/kurtkuehnert/spherical_terrain_renderer) on the
-topic of large-scale terrain rendering.
-If you would like to help me build an extensive open-source terrain rendering library for the Bevy game engine, feel
-free to contribute to the project.
-Also, join the Bevy Terrain [Discord server](https://discord.gg/7mtZWEpA82) for help, feedback, or to discuss feature
-ideas.
+This [Video](https://youtu.be/ZRMt1GV50nI) showcases the capabilities and features of this terrain renderer.
+
+## Abstract
+
+Realtime rendering of virtual globes represents the pinnacle of largescale terrain
+rendering. Modeling the surface of an entire planet has vast applications, ranging
+from Geographic Information Systems (GIS) to educational software. However, the
+immense scale of planetary terrain introduces significant challenges, including
+levelofdetail (LOD) management and numerical precision limitations. This thesis
+provides an overview of the fundamental challenges in planetary terrain rendering
+and examines existing solutions. Building on this foundation, a comprehensive
+framework for planetary terrain rendering is presented, supporting terrains on an
+ellipsoidal base shape, which accurately represents the true spheroid form of planets,
+such as the WGS84 reference ellipsoid. The framework covers key aspects such
+as viewdependent terrain geometry management, terrain data streaming, and an
+accurate spatial reference system (SRS) that integrates seamlessly with the quadtree
+based subdivision of terrain geometry and data. A novel approach to maintaining high
+precision despite the limitations of floatingpoint accuracy on the Graphics Process
+ing Unit (GPU) is introduced. This method leverages a Taylor series approximation
+to compute positions on the ellipsoidal surface relative to the viewer. Additionally, a
+hierarchical system of coordinate transformations is proposed to accurately represent
+terrain positions at various scales. A crucial feature of any virtual globe framework is
+its ability to render multiple localized datasets on top of the planetary surface. This
+thesis presents a method for achieving this, supported by a preprocessing pipeline
+that converts arbitrary georeferenced raster files into datasets compatible with the
+rendering system. An extensive opensource reference implementation is provided,
+and the framework is evaluated using multiple datasets.
+
+## Screenshots
 
 ## Examples
 
@@ -31,20 +53,6 @@ Some example datasets are available [here](https://drive.proton.me/urls/ZRDAC9SW
 Use the preprocess CLI or a prepared configuration in the `preprocess/examples` directory.
 Then run the `examples/spherical.rs` demo with the preprocessed dataset selected.
 The default path for the datasets is `assets/source_data`.
-
-## Documentation
-
-The `docs` folder contains a
-high-level [implementation overview](https://github.com/kurtkuehnert/bevy_terrain/blob/main/docs/implementation.md),
-as well as the [development status](https://github.com/kurtkuehnert/bevy_terrain/blob/main/docs/development.md),
-enumerating the features that I am planning on implementing next.
-If you would like to contribute to the project, this is a good place to start. Simply pick an issue/feature and discuss
-the details with me on Discord or GitHub.
-I would also recommend you take a look at
-my [thesis](https://github.com/kurtkuehnert/terrain_renderer/blob/main/Thesis.pdf).
-There, I present the basics of terrain rendering (chapter 2), common approaches (chapter 3), and a detailed explanation
-of the
-method used by `bevy_terrain` (chapter 4).
 
 ## Debug Controls
 
@@ -117,16 +125,12 @@ The examples use the following [demo datasets](https://drive.proton.me/urls/ZRDA
 
 ## License
 
-Bevy Terrain source code (this excludes the datasets in the assets directory) is dual-licensed under either:
+Planetary Terrain Renderer source code is dual-licensed under either:
 
 * MIT License (LICENSE-MIT or http://opensource.org/licenses/MIT)
 * Apache License, Version 2.0 (LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0)
 
 at your option.
 
-## Contributions
-
-Unless explicitly stated otherwise, any contribution intentionally submitted for inclusion in the work, as
-defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
-
-[^1]: Currently, the support for planar terrain rendering is broken.
+The Thesis.pdf is excluded from both of these and is licensed under
+the [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) license instead.
