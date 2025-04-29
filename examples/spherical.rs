@@ -142,7 +142,6 @@ fn initialize(
     //     },
     //     view,
     // );
-
     //
     // commands.spawn_terrain(
     //     asset_server.load("terrains/swiss/config.tc.ron"),
@@ -157,16 +156,16 @@ fn initialize(
     //     view,
     // );
     //
-    commands.spawn_terrain(
-        asset_server.load("terrains/hartenstein/config.tc.ron"),
-        TerrainViewConfig {
-            order: 1,
-            ..default()
-        },
-        CustomMaterial {
-            gradient: gradient2.clone(),
-            gradient_info: GradientInfo { mode: 2 },
-        },
-        view,
-    );
+    // commands.spawn_terrain(
+    //     asset_server.load("terrains/hartenstein/config.tc.ron"),
+    //     TerrainViewConfig {
+    //         order: 1,
+    //         ..default()
+    //     },
+    //     CustomMaterial {
+    //         gradient: gradient2.clone(),
+    //         gradient_info: GradientInfo { mode: 2 },
+    //     },
+    //     view,
+    // );
 }
