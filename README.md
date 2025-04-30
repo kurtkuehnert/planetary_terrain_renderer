@@ -43,12 +43,11 @@ and the framework is evaluated using multiple datasets.
 
 ![10](https://github.com/user-attachments/assets/da19c3b7-dad4-40f1-a94c-f4d987017ca2)
 ![Screenshot 2025-04-26 at 15 19 18](https://github.com/user-attachments/assets/5b92bb08-ecce-4194-beca-ff7a5b35ade4)
-![Screenshot 2024-10-28 at 11 26 50](https://github.com/user-attachments/assets/cbd4c52b-f643-4fc9-9093-adcbe7248c15)
 ![11](https://github.com/user-attachments/assets/cc82078b-677c-4c2a-8ddf-5f1d2f444882)
 
 ## Examples
 
-To try out Bevy Terrain, you first have to preprocess your dataset (GeoTIFF).
+To try out the terrain renderer, you first have to preprocess your dataset (GeoTIFF).
 Some example datasets are available [here](https://drive.proton.me/urls/ZRDAC9SWTM#IxwKkKWSBgnV).
 Use the preprocess CLI or a prepared configuration in the `preprocess/examples` directory.
 Then run the `examples/spherical.rs` demo with the preprocessed dataset selected.
