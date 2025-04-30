@@ -1,20 +1,15 @@
 # Planetary Terrain Renderer
 
-# Terrain Renderer
+![Screenshot 2025-04-26 at 15 13 40](https://github.com/user-attachments/assets/b3101705-20fc-4b6a-abfd-98e2a120b6f3)
 
 A large-scale planetary terrain renderer written in Rust using the Bevy game engine.
 
-This project is developed by [Kurt Kühnert](https://github.com/kurtkuehnert) and contains the reference implementation
-of my master thesis.
+This project is developed by [Kurt Kühnert](https://github.com/kurtkuehnert) and contains the reference implementation of my master thesis.
 This terrain renderer focuses on visualizing large-scale terrains in a seamless, continuous, and efficient manner.
-The source code was developed as the open-source plugin **[bevy_terrain](https://github.com/kurtkuehnert/bevy_terrain)**
-for the Bevy game engine.
+The source code was developed as the open-source plugin **[bevy_terrain](https://github.com/kurtkuehnert/bevy_terrain)** for the Bevy game engine.
 
-Additionally, this repository contains the full version of my *
-*[Master Thesis](https://github.com/kurtkuehnert/planetary_terrain_renderer/blob/main/Thesis.pdf)** describing the novel
-terrain rendering framework in great detail.
-A [citable version](https://monarch.qucosa.de/landing-page/?tx_dlf[id]=https%3A%2F%2Fmonarch.qucosa.de%2Fapi%2Fqucosa%253A82570%2Fmets)
-is also available.
+Additionally, this repository contains the full version of my **[Master Thesis](https://github.com/kurtkuehnert/planetary_terrain_renderer/blob/main/Thesis.pdf)** describing the novel terrain rendering framework in great detail.
+A [citable version](https://monarch.qucosa.de/landing-page/?tx_dlf[id]=https%3A%2F%2Fmonarch.qucosa.de%2Fapi%2Fqucosa%253A82570%2Fmets) is also available.
 
 This [Video](https://youtu.be/ZRMt1GV50nI) showcases the capabilities and features of this terrain renderer.
 
@@ -45,6 +40,11 @@ rendering system. An extensive opensource reference implementation is provided,
 and the framework is evaluated using multiple datasets.
 
 ## Screenshots
+
+![10](https://github.com/user-attachments/assets/da19c3b7-dad4-40f1-a94c-f4d987017ca2)
+![Screenshot 2025-04-26 at 15 19 18](https://github.com/user-attachments/assets/5b92bb08-ecce-4194-beca-ff7a5b35ade4)
+![Screenshot 2024-10-28 at 11 26 50](https://github.com/user-attachments/assets/cbd4c52b-f643-4fc9-9093-adcbe7248c15)
+![11](https://github.com/user-attachments/assets/cc82078b-677c-4c2a-8ddf-5f1d2f444882)
 
 ## Examples
 
