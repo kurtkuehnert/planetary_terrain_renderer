@@ -5,7 +5,7 @@ use crate::{
 };
 use bevy::{
     asset::{AssetServer, Handle},
-    platform_support::collections::HashMap,
+    platform::collections::HashMap,
     prelude::*,
     render::{
         render_graph::{self, NodeRunError, RenderGraphContext, RenderLabel},

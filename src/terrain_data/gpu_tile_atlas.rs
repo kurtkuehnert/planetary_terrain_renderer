@@ -7,7 +7,7 @@ use crate::{
     },
 };
 use bevy::{
-    platform_support::collections::HashMap,
+    platform::collections::HashMap,
     prelude::*,
     render::{
         Extract, MainWorld,

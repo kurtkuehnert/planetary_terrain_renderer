@@ -73,7 +73,7 @@ pub mod prelude {
         picking::{PickingData, TerrainPickingPlugin},
         plugin::{TerrainPlugin, TerrainSettings},
         // preprocess::{PreprocessDataset, Preprocessor, SphericalDataset, TerrainPreprocessPlugin},
-        render::{TerrainMaterial, TerrainMaterialPlugin},
+        render::TerrainMaterialPlugin,
         spawn::SpawnTerrainCommandsExt,
         terrain::TerrainConfig,
         terrain_data::{

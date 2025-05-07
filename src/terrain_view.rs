@@ -1,6 +1,6 @@
 //! Types for configuring terrain views.
 
-use bevy::{platform_support::collections::HashMap, prelude::*};
+use bevy::{platform::collections::HashMap, prelude::*};
 
 /// Resource that stores components that are associated to a terrain entity and a view entity.
 #[derive(Deref, DerefMut, Resource)]

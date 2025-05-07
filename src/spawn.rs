@@ -1,6 +1,5 @@
 use crate::{
     plugin::TerrainSettings,
-    render::TerrainMaterial,
     terrain::TerrainConfig,
     terrain_data::{TileAtlas, TileTree},
     terrain_view::{TerrainViewComponents, TerrainViewConfig},
@@ -64,7 +63,7 @@ pub(crate) fn spawn_terrains<M: Material>(
                     .spawn((
                         config.shape.transform(),
                         TileAtlas::new(&config, &mut buffers, &settings),
-                        TerrainMaterial(materials.add(material)),
+                        MeshMaterial3d(materials.add(material)),
                     ))
                     .id();
 

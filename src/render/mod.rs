@@ -13,7 +13,7 @@ mod tiling_prepass;
 
 pub use self::{
     terrain_bind_group::GpuTerrain,
-    terrain_material::{TerrainMaterial, TerrainMaterialPlugin},
+    terrain_material::TerrainMaterialPlugin,
     terrain_view_bind_group::{GpuTerrainView, TerrainViewBindGroup},
 };
 
