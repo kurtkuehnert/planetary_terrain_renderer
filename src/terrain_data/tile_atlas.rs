@@ -20,7 +20,7 @@ use bevy::{
     },
     tasks::Task,
 };
-use big_space::prelude::*;
+use big_space::prelude::GridCell;
 use std::collections::VecDeque;
 
 /// The current state of a tile of a [`TileAtlas`].
@@ -60,9 +60,8 @@ struct TileState {
 /// The [`u32`] can be used for accessing the attached data in systems by the CPU
 /// and in shaders by the GPU.
 #[derive(Component)]
-#[require(Transform, Visibility, VisibilityClass, DefaultLoader)]
+#[require(Transform, GridCell, Visibility, VisibilityClass, DefaultLoader)]
 #[component(on_add = add_visibility_class::<TileAtlas>)]
-#[cfg_attr(feature = "high_precision", require(GridCell))]
 pub struct TileAtlas {
     pub(crate) attachments: HashMap<AttachmentLabel, Attachment>, // stores the attachment data
     tile_states: HashMap<TileCoordinate, TileState>,

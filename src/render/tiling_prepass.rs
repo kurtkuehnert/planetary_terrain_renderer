@@ -42,7 +42,6 @@ impl TilingPrepassPipelineKey {
     pub fn from_debug(debug: &DebugTerrain) -> Self {
         let mut key = TilingPrepassPipelineKey::NONE;
 
-        #[cfg(feature = "high_precision")]
         if debug.high_precision {
             key |= TilingPrepassPipelineKey::HIGH_PRECISION;
         }
@@ -73,7 +72,6 @@ impl TilingPrepassPipelineKey {
         if self.contains(TilingPrepassPipelineKey::SPHERICAL) {
             shader_defs.push("SPHERICAL".into());
         }
-        #[cfg(feature = "high_precision")]
         if self.contains(TilingPrepassPipelineKey::HIGH_PRECISION) {
             shader_defs.push("HIGH_PRECISION".into());
         }

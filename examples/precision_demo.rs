@@ -171,22 +171,20 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    commands.spawn_big_space(Grid::default(), |root| {
-        root.spawn_spatial((
-            Mesh3d(meshes.add(Sphere::new(1.0).mesh().ico(20).unwrap())),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: basic::BLACK.into(),
-                unlit: true,
-                ..Default::default()
-            })),
-        ));
+    commands.spawn((
+        Mesh3d(meshes.add(Sphere::new(1.0).mesh().ico(20).unwrap())),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: basic::BLACK.into(),
+            unlit: true,
+            ..Default::default()
+        })),
+    ));
 
-        root.spawn_spatial((
-            Transform::from_translation(Vec3::new(1.0, 1.0, 1.0).normalize() * 3.0)
-                .looking_at(Vec3::ZERO, Vec3::Y),
-            DebugCameraController::new(1.0),
-        ));
-    });
+    commands.spawn((
+        Transform::from_translation(Vec3::new(1.0, 1.0, 1.0).normalize() * 3.0)
+            .looking_at(Vec3::ZERO, Vec3::Y),
+        DebugCameraController::new(1.0),
+    ));
 }
 
 fn update(errors: Res<Errors>, mut gizmos: Gizmos) {

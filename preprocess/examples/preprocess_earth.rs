@@ -4,7 +4,7 @@ use gdal::raster::GdalDataType;
 
 fn main() {
     let args = Cli {
-        src_path: vec!["assets/source_data/gebco_earth.tif".into()],
+        src_path: vec!["source_data/gebco_earth.tif".into()],
         terrain_path: "assets/terrains/earth".into(),
         temp_path: None,
         overwrite: true,
@@ -25,7 +25,7 @@ fn main() {
     preprocess(src_dataset, &mut context);
 
     let args = Cli {
-        src_path: vec!["assets/source_data/true_marble.tif".into()],
+        src_path: vec!["source_data/true_marble.tif".into()],
         terrain_path: "assets/terrains/earth".into(),
         temp_path: None,
         overwrite: true,

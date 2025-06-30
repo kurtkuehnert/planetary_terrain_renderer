@@ -3,14 +3,12 @@ use std::mem;
 
 mod coordinate;
 mod spheroid;
-#[cfg(feature = "high_precision")]
 mod surface_approximation;
 mod terrain_shape;
 
-#[cfg(feature = "high_precision")]
-pub use self::surface_approximation::SurfaceApproximation;
 pub use self::{
     coordinate::{Coordinate, TileCoordinate, ViewCoordinate},
+    surface_approximation::SurfaceApproximation,
     terrain_shape::TerrainShape,
 };
 

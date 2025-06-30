@@ -63,8 +63,7 @@ pub struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
-        #[cfg(feature = "high_precision")]
-        app.add_plugins(BigSpacePlugin::default());
+        app.add_plugins(BigSpaceDefaultPlugins);
 
         app.add_plugins(RonAssetPlugin::<TerrainConfig>::new(&["tc.ron"]))
             .init_asset::<TerrainConfig>()
@@ -83,7 +82,6 @@ impl Plugin for TerrainPlugin {
                         TileAtlas::update,
                         start_loading,
                         TileTree::adjust_to_tile_atlas,
-                        #[cfg(feature = "high_precision")]
                         TileTree::generate_surface_approximation,
                         TileTree::update_terrain_view_buffer,
                         TileAtlas::update_terrain_buffer,

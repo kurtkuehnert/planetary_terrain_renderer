@@ -4,7 +4,7 @@ use gdal::raster::GdalDataType;
 
 fn main() {
     let args = Cli {
-        src_path: vec!["assets/source_data/LOS.tiff".into()],
+        src_path: vec!["source_data/LOS.tiff".into()],
         terrain_path: "assets/terrains/los".into(),
         temp_path: None,
         overwrite: true,

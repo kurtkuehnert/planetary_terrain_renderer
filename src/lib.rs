@@ -61,9 +61,6 @@ pub mod util;
 pub mod prelude {
     //! `use bevy_terrain::prelude::*;` to import common components, bundles, and plugins.
 
-    #[cfg(feature = "high_precision")]
-    pub use big_space::{commands::BigSpaceCommands, grid::Grid};
-
     pub use crate::{
         debug::{
             DebugCameraController, DebugTerrainMaterial, LoadingImages, OrbitalCameraController,
@@ -81,4 +78,5 @@ pub mod prelude {
         },
         terrain_view::{TerrainViewComponents, TerrainViewConfig},
     };
+    pub use big_space::{commands::BigSpaceCommands, grid::Grid};
 }

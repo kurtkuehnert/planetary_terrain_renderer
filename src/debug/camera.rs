@@ -1,7 +1,5 @@
-#[cfg(feature = "high_precision")]
-use big_space::{prelude::*, world_query::GridTransformItem};
-
 use bevy::{input::mouse::MouseMotion, math::DVec3, prelude::*};
+use big_space::{prelude::*, world_query::CellTransformItem};
 
 #[derive(Clone, Debug, Reflect, Component)]
 #[require(Camera3d, FloatingOrigin = FloatingOrigin)]
@@ -43,24 +41,15 @@ impl DebugCameraController {
 }
 
 pub fn debug_camera_controller(
-    #[cfg(feature = "high_precision")] grids: Grids,
+    grids: Grids,
     time: Res<Time>,
     keyboard: Res<ButtonInput<KeyCode>>,
     mut mouse_move: EventReader<MouseMotion>,
-    #[cfg(feature = "high_precision")] mut camera: Query<(
-        Entity,
-        GridTransform,
-        &mut DebugCameraController,
-    )>,
-    #[cfg(not(feature = "high_precision"))] mut camera: Query<(
-        &mut Transform,
-        &mut DebugCameraController,
-    )>,
+    mut camera: Query<(Entity, CellTransform, &mut DebugCameraController)>,
 ) {
-    #[cfg(feature = "high_precision")]
     let Ok((
         camera,
-        GridTransformItem {
+        CellTransformItem {
             mut transform,
             mut cell,
         },
@@ -69,11 +58,8 @@ pub fn debug_camera_controller(
     else {
         return;
     };
-    #[cfg(feature = "high_precision")]
-    let grid = grids.parent_grid(camera).unwrap();
 
-    #[cfg(not(feature = "high_precision"))]
-    let (mut transform, mut controller) = camera.single_mut();
+    let grid = grids.parent_grid(camera).unwrap();
 
     keyboard
         .just_pressed(KeyCode::KeyT)
@@ -130,18 +116,10 @@ pub fn debug_camera_controller(
     let new_pitch = (pitch + controller.rotation_velocity.y)
         .clamp(-std::f32::consts::FRAC_PI_2, std::f32::consts::FRAC_PI_2);
 
-    #[cfg(feature = "high_precision")]
-    {
-        let (cell_delta, translation_delta) =
-            grid.translation_to_grid(controller.translation_velocity);
+    let (cell_delta, translation_delta) = grid.translation_to_grid(controller.translation_velocity);
 
-        *cell += cell_delta;
-        transform.translation += translation_delta;
-    }
-    #[cfg(not(feature = "high_precision"))]
-    {
-        transform.translation += controller.translation_velocity.as_vec3();
-    }
+    *cell += cell_delta;
+    transform.translation += translation_delta;
 
     transform.rotation = Quat::from_euler(EulerRot::YXZ, new_yaw, new_pitch, 0.0);
 }

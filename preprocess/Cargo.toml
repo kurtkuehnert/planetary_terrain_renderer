@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bevy_terrain = { path = "..", features = ["high_precision"] }
+bevy_terrain = { path = ".." }
 gag = "1.0.0"
 gdal = { version = "0.17.0", features = ["bindgen", "ndarray"] }
 gdal-sys = "0.10.0"

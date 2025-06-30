@@ -125,7 +125,6 @@ pub struct TileTree {
     pub(crate) view_world_position: Vec3,
     pub(crate) view_coordinates: [Coordinate; 6],
     pub(crate) half_spaces: [Vec4; 6],
-    #[cfg(feature = "high_precision")]
     pub(crate) surface_approximation: [crate::math::SurfaceApproximation; 6],
     pub(crate) approximate_height: f32,
     pub(crate) order: u32,
@@ -206,7 +205,7 @@ impl TileTree {
             requested_tiles: default(),
             view_coordinates: default(),
             half_spaces: default(),
-            #[cfg(feature = "high_precision")]
+
             surface_approximation: default(),
             approximate_height: 0.0,
             order: view_config.order,
@@ -327,9 +326,8 @@ impl TileTree {
     pub(crate) fn compute_requests(
         camera: Query<&Camera>,
         mut tile_trees: ResMut<TerrainViewComponents<TileTree>>,
-        #[cfg(feature = "high_precision")] grids: Grids,
-        #[cfg(feature = "high_precision")] views: Query<(&Transform, &GridCell)>,
-        #[cfg(not(feature = "high_precision"))] view_transforms: Query<&Transform>,
+        grids: Grids,
+        views: Query<(&Transform, &GridCell)>,
     ) {
         for (&(_, view), tile_tree) in tile_trees.iter_mut() {
             let camera = camera.get(view).unwrap();
@@ -368,7 +366,6 @@ impl TileTree {
         }
     }
 
-    #[cfg(feature = "high_precision")]
     pub fn generate_surface_approximation(mut tile_trees: ResMut<TerrainViewComponents<TileTree>>) {
         for tile_tree in tile_trees.values_mut() {
             tile_tree.surface_approximation = tile_tree.view_coordinates.map(|view_coordinate| {
