@@ -8,10 +8,9 @@ This project is developed by [Kurt Kühnert](https://github.com/kurtkuehnert) an
 This terrain renderer focuses on visualizing large-scale terrains in a seamless, continuous, and efficient manner.
 The source code was developed as the open-source plugin **[bevy_terrain](https://github.com/kurtkuehnert/bevy_terrain)** for the Bevy game engine.
 
-Additionally, this repository contains the full version of my **[Master Thesis](https://github.com/kurtkuehnert/planetary_terrain_renderer/blob/main/Thesis.pdf)** describing the novel terrain rendering framework in great detail.
-A [citable version](https://monarch.qucosa.de/landing-page/?tx_dlf[id]=https%3A%2F%2Fmonarch.qucosa.de%2Fapi%2Fqucosa%253A82570%2Fmets) is also available.
+My Master Thesis is as of now not publically released, but will be available soon.
 
-This [Video](https://youtu.be/ZRMt1GV50nI) showcases the capabilities and features of this terrain renderer.
+This [Video](https://youtu.be/zdz3-77-3EI) showcases the capabilities and features of this terrain renderer.
 
 ## Abstract
 
