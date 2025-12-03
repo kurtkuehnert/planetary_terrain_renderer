@@ -4,11 +4,9 @@
 
 A large-scale planetary terrain renderer written in Rust using the Bevy game engine.
 
-This project is developed by [Kurt Kühnert](https://github.com/kurtkuehnert) and contains the reference implementation of my master thesis.
+This project is developed by [Kurt Kühnert](https://github.com/kurtkuehnert) and contains the reference implementation of my [Master Thesis](https://doi.org/10.60687/2025-0147).
 This terrain renderer focuses on visualizing large-scale terrains in a seamless, continuous, and efficient manner.
 The source code was developed as the open-source plugin **[bevy_terrain](https://github.com/kurtkuehnert/bevy_terrain)** for the Bevy game engine.
-
-My Master Thesis is as of now not publically released, but will be available soon.
 
 This [Video](https://youtu.be/zdz3-77-3EI) showcases the capabilities and features of this terrain renderer.
 
